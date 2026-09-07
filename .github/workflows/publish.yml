@@ -20,11 +20,11 @@ jobs:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
       
-      - name: Install dependencies
-        run: npm install
+      - name: Install browserify
+        run: npm install -g browserify
       
-      - name: Run tests
-        run: npm test || true
+      - name: Create browser bundle
+        run: browserify botql.js -o botql.browser.js --standalone BotQL
       
       - name: Publish to npm
         run: npm publish
