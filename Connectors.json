@@ -1,0 +1,17 @@
+{
+    "TELEGRAM": "./connectors/telegram.js",
+    "WHATSAPP": "./connectors/whatsapp.js",
+    "DISCORD": "./connectors/discord.js",
+    "SLACK": "./connectors/slack.js",
+    "MESSENGER": "./connectors/messenger.js",
+    "INSTAGRAM": "./connectors/instagram.js",
+    "TWITTER": "./connectors/twitter.js",
+    "SMS": "./connectors/sms.js",
+    "EMAIL": "./connectors/email.js",
+    "WEBHOOK": "./connectors/webhook.js",
+    "VIBER": "./connectors/viber.js",
+    "LINE": "./connectors/line.js",
+    "WECHAT": "./connectors/wechat.js",
+    "MATRIX": "./connectors/matrix.js",
+    "GOOGLECHAT": "./connectors/googlechat.js"
+}
