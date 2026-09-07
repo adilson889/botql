@@ -23,8 +23,13 @@ jobs:
       - name: Install browserify
         run: npm install -g browserify
       
+      - name: Debug files
+        run: |
+          pwd
+          ls -la
+      
       - name: Create browser bundle
-        run: browserify botql.js -o botql.browser.js --standalone BotQL
+        run: browserify ./botql.js -o ./botql.browser.js --standalone BotQL
       
       - name: Publish to npm
         run: npm publish
