@@ -23,7 +23,8 @@ jobs:
       - name: Create browser bundle
         working-directory: /home/runner/work/botql/botql
         run: |
-          npx esbuild botql.js --bundle --format=iife --global-name=BotQL --outfile=botql.browser.js
+          npx esbuild botql.js --bundle --format=iife --global-name=BotQL --outfile=botql.browser.js \
+            --external:fs --external:path --external:node:sqlite
       
       - name: Publish to npm
         run: npm publish
