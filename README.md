@@ -1,26 +1,33 @@
 
 # BotQL: Bot Query Language
-<center>
 
-[![npm version](https://img.shields.io/npm/v/botql.svg)](https://www.npmjs.com/package/botql)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/adilson889/botql/pulls)
-[![BotQL](https://img.shields.io/badge/BotQL-rules%20language-blue.svg)](https://github.com/adilson889/botql)
-</Center>
 
-**BotQL** é uma linguagem de regras simples, inspirada em SQL, para criar bots sem precisar de escrever código tradicional. Todos os comandos são escritos em **MAIÚSCULAS**, e blocos com mais de uma ação usam chaves `{ }`.
+<p align="center">
+    <a href="https://www.npmjs.com/package/botql">
+        <img src="https://img.shields.io/npm/v/botql.svg" alt="npm version">
+    </a>
+    <a href="https://opensource.org/licenses/MIT">
+        <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+    </a>
+    <a href="https://github.com/adilson889/botql/pulls">
+        <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
+    </a>
+    <a href="https://github.com/adilson889/botql">
+        <img src="https://img.shields.io/badge/BotQL-rules%20language-blue.svg" alt="BotQL">
+    </a>
+</p>
 
-Vive no mesmo ficheiro `.sql`, com comandos reais de banco de dados — o bot age e persiste dados na mesma linguagem, sem sair do BotQL. O bot corre localmente, no computador ou servidor do próprio utilizador, e não em servidores geridos por terceiros.
 
-Não precisas de saber programar para escrever BotQL; precisas apenas de saber o que queres que o teu bot faça.
+
+**BotQL** is a simple, SQL-inspired rules language for creating bots without writing traditional code. All commands are written in **UPPERCASE**, and blocks with more than one action use curly braces `{ }`.
+
+It lives in `.sql` files, with real database commands — the bot acts and persists data in the same language, without leaving BotQL. The bot runs locally, on the user's own computer or server, not on third-party managed servers.
+
+You don't need to know how to code to write BotQL; you just need to know what you want your bot to do.
 
 ---
 
-## Documentação Completa
-
-Ver **[docs/GETSTARTED.md](docs/GETSTARTED.md)** para o guia completo.
-
-## Instalação
+## Installation
 
 ### Node.js
 
@@ -32,9 +39,9 @@ npm install botql
 const { BotQLInterpreter } = require('botql');
 
 const bot = BotQLInterpreter.fromSource(`
-CREATE BOT "MeuBot"
+CREATE BOT "MyBot"
 ON MESSAGE {
-    WHEN CONTAINS "olá" REPLY "Oi!"
+    WHEN CONTAINS "hello" REPLY "Hi!"
 }
 RUN BOT
 `);
@@ -48,7 +55,7 @@ Browser (CDN)
 <script src="https://cdn.jsdelivr.net/npm/botql@1.0.2/botql.browser.js"></script>
 ```
 
-Uso
+Usage
 
 JavaScript
 
@@ -75,7 +82,7 @@ import { BotQLInterpreter } from 'botql';
 const bot = BotQLInterpreter.fromSource(`
 CREATE BOT "ReactBot"
 ON MESSAGE {
-    WHEN CONTAINS "olá" REPLY "Olá do React!"
+    WHEN CONTAINS "hello" REPLY "Hello from React!"
 }
 RUN BOT
 `);
@@ -91,7 +98,7 @@ import { BotQLInterpreter } from 'botql';
 const bot = BotQLInterpreter.fromSource(`
 CREATE BOT "TSBot"
 ON MESSAGE {
-    WHEN CONTAINS "olá" REPLY "Olá do TypeScript!"
+    WHEN CONTAINS "hello" REPLY "Hello from TypeScript!"
 }
 RUN BOT
 `);
@@ -103,9 +110,9 @@ PHP
 
 ```php
 <?php
-$codigo = 'CREATE BOT "PHPBot" ON MESSAGE { WHEN CONTAINS "olá" REPLY "Olá!" } RUN BOT';
-$resposta = shell_exec('node -e "' . addslashes($codigo) . '"');
-echo $resposta;
+$code = 'CREATE BOT "PHPBot" ON MESSAGE { WHEN CONTAINS "hello" REPLY "Hello!" } RUN BOT';
+$response = shell_exec('node -e "' . addslashes($code) . '"');
+echo $response;
 ?>
 ```
 
@@ -114,12 +121,13 @@ Python
 ```python
 import subprocess
 
-codigo = 'CREATE BOT "PythonBot" ON MESSAGE { WHEN CONTAINS "olá" REPLY "Olá!" } RUN BOT'
-subprocess.run(['node', '-e', codigo])
+code = 'CREATE BOT "PythonBot" ON MESSAGE { WHEN CONTAINS "hello" REPLY "Hello!" } RUN BOT'
+subprocess.run(['node', '-e', code])
 ```
 
 ---
 
-Licença
+License
 
 MIT © Adilson C. Rafael
+adilsonrafael847@gmail.com
