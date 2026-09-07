@@ -5,7 +5,6 @@
 </h1>
 
 
-
 <p align="center">
     <a href="https://www.npmjs.com/package/botql">
         <img src="https://img.shields.io/npm/v/botql.svg" alt="npm version">
@@ -19,7 +18,9 @@
     <a href="https://github.com/adilson889/botql">
         <img src="https://img.shields.io/badge/BotQL-rules%20language-blue.svg" alt="BotQL">
     </a>
-[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red.svg)](https://github.com/sponsors/adilson889)
+    <a href="https://github.com/sponsors/adilson889">
+        <img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-red.svg" alt="Sponsor">
+    </a>
 </p>
 
 
