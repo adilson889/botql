@@ -23,11 +23,17 @@
 
 
 
-**BotQL** is a simple, SQL-inspired rules language for creating bots without writing traditional code. All commands are written in **UPPERCASE**, and blocks with more than one action use curly braces `{ }`.
+<p align="justify">
+    <strong>BotQL</strong> is a simple, SQL-inspired rules language for creating bots without writing traditional code. All commands are written in <strong>UPPERCASE</strong>, and blocks with more than one action use curly braces <code>{ }</code>.
+</p>
 
-It lives in `.sql` files, with real database commands — the bot acts and persists data in the same language, without leaving BotQL. The bot runs locally, on the user's own computer or server, not on third-party managed servers.
+<p align="justify">
+    It lives in <code>.sql</code> files, with real database commands — the bot acts and persists data in the same language, without leaving BotQL. The bot runs locally, on the user's own computer or server, not on third-party managed servers.
+</p>
 
-You don't need to know how to code to write BotQL; you just need to know what you want your bot to do.
+<p align="justify">
+    You don't need to know how to code to write BotQL; you just need to know what you want your bot to do.
+</p>
 
 ---
 
