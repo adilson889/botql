@@ -47,6 +47,7 @@ For server-side applications, CLI tools, and any Node.js environment:
 
 ```bash
 npm install botql
+```
 
 ### Browser (CDN)
 
