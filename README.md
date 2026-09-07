@@ -135,6 +135,16 @@ code = 'CREATE BOT "PythonBot" ON MESSAGE { WHEN CONTAINS "hello" REPLY "Hello!"
 subprocess.run(['node', '-e', code])
 ```
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red.svg)](https://github.com/sponsors/adilson889)
+__
+
+
+## Support
+
+If this project helped you, consider:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow.svg)](https://buymeacoffee.com/adilson)
+
 ---
 
 License
