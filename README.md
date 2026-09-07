@@ -43,9 +43,28 @@
 
 ### Node.js
 
+For server-side applications, CLI tools, and any Node.js environment:
+
 ```bash
 npm install botql
+
+### Browser (CDN)
+
+For websites, web apps, and in-browser editors — no build step required:
+
+```html
+<!-- jsDelivr -->
+<script src="https://cdn.jsdelivr.net/npm/botql/botql.browser.js"></script>
+
+<!-- unpkg -->
+<script src="https://unpkg.com/botql/botql.browser.js"></script>
 ```
+
+
+
+
+
+
 
 ```javascript
 const { BotQLInterpreter } = require('botql');
