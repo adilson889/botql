@@ -19,6 +19,7 @@
     <a href="https://github.com/adilson889/botql">
         <img src="https://img.shields.io/badge/BotQL-rules%20language-blue.svg" alt="BotQL">
     </a>
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red.svg)](https://github.com/sponsors/adilson889)
 </p>
 
 
@@ -134,9 +135,6 @@ import subprocess
 code = 'CREATE BOT "PythonBot" ON MESSAGE { WHEN CONTAINS "hello" REPLY "Hello!" } RUN BOT'
 subprocess.run(['node', '-e', code])
 ```
-
-[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red.svg)](https://github.com/sponsors/adilson889)
-__
 
 
 ## Support
