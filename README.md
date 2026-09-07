@@ -1,9 +1,24 @@
-
 <h1 align="center">
-    <span style="background: linear-gradient(90deg, #6C5CE7, #00B894); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; font-size: 2.2em;">
+    <span style="
+        background: linear-gradient(90deg, #6C5CE7, #00B894, #6C5CE7);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 900;
+        font-size: 2.2em;
+        animation: shine 3s linear infinite;
+    ">
         BotQL: Bot Query Language
     </span>
 </h1>
+
+<style>
+    @keyframes shine {
+        0% { background-position: 0% center; }
+        100% { background-position: 200% center; }
+    }
+</style>
+
 
 
 <p align="center">
