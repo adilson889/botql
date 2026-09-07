@@ -4,7 +4,6 @@
     </span>
 </h1>
 
-
 <p align="center">
     <a href="https://www.npmjs.com/package/botql">
         <img src="https://img.shields.io/npm/v/botql.svg" alt="npm version">
@@ -23,8 +22,6 @@
     </a>
 </p>
 
-
-
 <p align="justify">
     <strong>BotQL</strong> is a simple, SQL-inspired rules language for creating bots without writing traditional code. All commands are written in <strong>UPPERCASE</strong>, and blocks with more than one action use curly braces <code>{ }</code>.
 </p>
@@ -39,6 +36,14 @@
 
 ---
 
+## Getting Started
+
+Want to learn the full syntax, see all commands, and understand how BotQL works? The complete guide walks you through everything from your first bot to advanced features like local knowledge retrieval and AI integration.
+
+**[Read the full documentation →](docs/GETSTARTED.md)**
+
+---
+
 ## Installation
 
 ### Node.js
@@ -48,24 +53,6 @@ For server-side applications, CLI tools, and any Node.js environment:
 ```bash
 npm install botql
 ```
-
-### Browser (CDN)
-
-For websites, web apps, and in-browser editors — no build step required:
-
-```html
-<!-- jsDelivr -->
-<script src="https://cdn.jsdelivr.net/npm/botql/botql.browser.js"></script>
-
-<!-- unpkg -->
-<script src="https://unpkg.com/botql/botql.browser.js"></script>
-```
-
-
-
-
-
-
 
 ```javascript
 const { BotQLInterpreter } = require('botql');
@@ -81,15 +68,23 @@ RUN BOT
 bot.start();
 ```
 
-Browser (CDN)
+### Browser (CDN)
+
+For websites, web apps, and in-browser editors — no build step required:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/botql@1.0.2/botql.browser.js"></script>
+<!-- jsDelivr -->
+<script src="https://cdn.jsdelivr.net/npm/botql/botql.browser.js"></script>
+
+<!-- unpkg -->
+<script src="https://unpkg.com/botql/botql.browser.js"></script>
 ```
 
-Usage
+---
 
-JavaScript
+## Usage
+
+### JavaScript
 
 ```javascript
 const { BotQLInterpreter } = require('botql');
@@ -106,7 +101,7 @@ bot.start();
 bot.receiveMessage('+244900000000', 'hello');
 ```
 
-JSX (React)
+### JSX (React)
 
 ```jsx
 import { BotQLInterpreter } from 'botql';
@@ -122,7 +117,7 @@ RUN BOT
 bot.start();
 ```
 
-TypeScript
+### TypeScript
 
 ```typescript
 import { BotQLInterpreter } from 'botql';
@@ -138,7 +133,7 @@ RUN BOT
 bot.start();
 ```
 
-PHP
+### PHP
 
 ```php
 <?php
@@ -148,7 +143,7 @@ echo $response;
 ?>
 ```
 
-Python
+### Python
 
 ```python
 import subprocess
@@ -157,16 +152,17 @@ code = 'CREATE BOT "PythonBot" ON MESSAGE { WHEN CONTAINS "hello" REPLY "Hello!"
 subprocess.run(['node', '-e', code])
 ```
 
+---
 
 ## Support
 
-If this project helped you, consider:
+If this project helped you, consider supporting:
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow.svg)](https://buymeacoffee.com/adilson)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Donate-pink.svg)](https://github.com/sponsors/adilson889)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow.svg)](https://www.buymeacoffee.com/adilson889)
 
 ---
 
-License
+### License
 
 MIT © Adilson C. Rafael
-adilsonrafael847@gmail.com
