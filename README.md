@@ -1,3 +1,4 @@
+
 # BotQL — Bot Query Language
 
 [![npm version](https://img.shields.io/npm/v/botql.svg)](https://www.npmjs.com/package/botql)
@@ -19,5 +20,104 @@ Ver **[docs/GETSTARTED.md](docs/GETSTARTED.md)** para o guia completo.
 
 ## Instalação
 
+### Node.js
+
 ```bash
 npm install botql
+```
+
+```javascript
+const { BotQLInterpreter } = require('botql');
+
+const bot = BotQLInterpreter.fromSource(`
+CREATE BOT "MeuBot"
+ON MESSAGE {
+    WHEN CONTAINS "olá" REPLY "Oi!"
+}
+RUN BOT
+`);
+
+bot.start();
+```
+
+Browser (CDN)
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/botql@1.0.2/botql.browser.js"></script>
+```
+
+Uso
+
+JavaScript
+
+```javascript
+const { BotQLInterpreter } = require('botql');
+
+const bot = BotQLInterpreter.fromSource(`
+CREATE BOT "JSBot"
+ON MESSAGE {
+    WHEN CONTAINS "hello" REPLY "Hello!"
+}
+RUN BOT
+`);
+
+bot.start();
+bot.receiveMessage('+244900000000', 'hello');
+```
+
+JSX (React)
+
+```jsx
+import { BotQLInterpreter } from 'botql';
+
+const bot = BotQLInterpreter.fromSource(`
+CREATE BOT "ReactBot"
+ON MESSAGE {
+    WHEN CONTAINS "olá" REPLY "Olá do React!"
+}
+RUN BOT
+`);
+
+bot.start();
+```
+
+TypeScript
+
+```typescript
+import { BotQLInterpreter } from 'botql';
+
+const bot = BotQLInterpreter.fromSource(`
+CREATE BOT "TSBot"
+ON MESSAGE {
+    WHEN CONTAINS "olá" REPLY "Olá do TypeScript!"
+}
+RUN BOT
+`);
+
+bot.start();
+```
+
+PHP
+
+```php
+<?php
+$codigo = 'CREATE BOT "PHPBot" ON MESSAGE { WHEN CONTAINS "olá" REPLY "Olá!" } RUN BOT';
+$resposta = shell_exec('node -e "' . addslashes($codigo) . '"');
+echo $resposta;
+?>
+```
+
+Python
+
+```python
+import subprocess
+
+codigo = 'CREATE BOT "PythonBot" ON MESSAGE { WHEN CONTAINS "olá" REPLY "Olá!" } RUN BOT'
+subprocess.run(['node', '-e', codigo])
+```
+
+---
+
+Licença
+
+MIT © Adilson C. Rafael
