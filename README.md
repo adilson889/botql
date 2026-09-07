@@ -1,5 +1,5 @@
 
-### BotQL: Bot Query Language
+## BotQL: Bot Query Language
 
 
 <p align="center">
