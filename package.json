@@ -1,6 +1,6 @@
 {
   "name": "botql",
-  "version": "1.0.2",
+  "version": "1.1.2",
   "description": "BotQL is a simple, SQL-inspired rules language for creating bots without writing traditional code.",
   "main": "botql.js",
   "browser": "botql.browser.js",
