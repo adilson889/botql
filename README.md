@@ -1,5 +1,9 @@
 
-## BotQL: Bot Query Language
+<h1 align="center">
+    <span style="background: linear-gradient(90deg, #6C5CE7, #00B894); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; font-size: 2.2em;">
+        BotQL: Bot Query Language
+    </span>
+</h1>
 
 
 <p align="center">
