@@ -1,18 +1,15 @@
-Faça isso ali
-
-
-# BotQL — Bot Query Language
+# BotQL:  Bot Query Language
 
 <p align="justify">
-**BotQL** é uma **linguagem de regras** simples, inspirada em SQL, para criar bots sem precisar de escrever código tradicional.
+<b>BotQL</b> é uma <b>linguagem de regras</b> simples, inspirada em SQL, para criar bots sem precisar de escrever código tradicional.
 </p>
 
 <p align="justify">
-Todos os comandos são escritos em **MAIÚSCULAS**. Blocos com mais de uma ação usam chaves `{ }`.
+Todos os comandos são escritos em <b>MAIÚSCULAS</b>. Blocos com mais de uma ação usam chaves <code>{ }</code>.
 </p>
 
 <p align="justify">
-Vive no mesmo ficheiro `.sql`, com comandos reais de banco de dados — o bot age e persiste dados na mesma linguagem, sem sair do BotQL.
+Vive no mesmo ficheiro <code>.sql</code>, com comandos reais de banco de dados — o bot age e persiste dados na mesma linguagem, sem sair do BotQL.
 </p>
 
 ---
@@ -80,7 +77,7 @@ RUN BOT
 ## CONTAINS: as três formas
 
 <p align="justify">
-Todas as formas de `CONTAINS` são **case-insensitive** ("OLA", "Ola" e "ola" batem todas com `CONTAINS "ola"`) e podem ser combinadas com `OR` dentro do mesmo `WHEN`.
+Todas as formas de <code>CONTAINS</code> são <b>case-insensitive</b> ("OLA", "Ola" e "ola" batem todas com <code>CONTAINS "ola"</code>) e podem ser combinadas com <code>OR</code> dentro do mesmo <code>WHEN</code>.
 </p>
 
 ### 1. Palavra única (forma original)
@@ -92,7 +89,7 @@ WHEN CONTAINS "oi" OR CONTAINS "ola" {
 ```
 
 <p align="justify">
-Prático para 2-3 palavras. Para listas maiores, repetir `OR CONTAINS` fica longo e difícil de ler — usa-se uma das duas formas abaixo.
+Prático para 2-3 palavras. Para listas maiores, repetir <code>OR CONTAINS</code> fica longo e difícil de ler — usa-se uma das duas formas abaixo.
 </p>
 
 ### 2. Lista inline
@@ -104,7 +101,7 @@ WHEN CONTAINS ("oi", "ola", "boa tarde", "boa noite", "bom dia") {
 ```
 
 <p align="justify">
-Basta uma das palavras da lista aparecer na mensagem para a condição ser verdadeira. Boa para listas de tamanho médio (5-20 palavras) que fazem sentido ficar visíveis dentro do próprio `.sql`.
+Basta uma das palavras da lista aparecer na mensagem para a condição ser verdadeira. Boa para listas de tamanho médio (5-20 palavras) que fazem sentido ficar visíveis dentro do próprio <code>.sql</code>.
 </p>
 
 ### 3. Lista a partir de um ficheiro `.txt`
@@ -116,7 +113,7 @@ WHEN CONTAINS KEYWORDS(saudacoes.txt) {
 ```
 
 <p align="justify">
-Para listas grandes (100+ palavras) que poluiriam o `.sql`. O nome do ficheiro **não leva aspas** — é um nome de ficheiro, não uma string de busca, por isso fica visualmente diferente de `CONTAINS "texto"`.
+Para listas grandes (100+ palavras) que poluiriam o <code>.sql</code>. O nome do ficheiro <b>não leva aspas</b> — é um nome de ficheiro, não uma string de busca, por isso fica visualmente diferente de <code>CONTAINS "texto"</code>.
 </p>
 
 <p align="justify">
@@ -124,7 +121,7 @@ O ficheiro é lido uma vez (e mantido em cache) na primeira mensagem que avalia 
 </p>
 
 <p align="justify">
-**Formato do `.txt`:** uma palavra ou frase por linha, sem aspas, sem vírgulas, sem comentários, sem qualquer outra sintaxe misturada — um ficheiro serve só para uma lista, evita ambiguidade sobre o que é keyword e o que não é.
+<b>Formato do <code>.txt</code>:</b> uma palavra ou frase por linha, sem aspas, sem vírgulas, sem comentários, sem qualquer outra sintaxe misturada — um ficheiro serve só para uma lista, evita ambiguidade sobre o que é keyword e o que não é.
 </p>
 
 ```
@@ -140,7 +137,7 @@ bom dia
 ## REPLY a partir de um ficheiro indexado
 
 <p align="justify">
-Além de `REPLY "texto direto"`, o `REPLY` também lê uma entrada numerada de um ficheiro externo:
+Além de <code>REPLY "texto direto"</code>, o <code>REPLY</code> também lê uma entrada numerada de um ficheiro externo:
 </p>
 
 ```sql
@@ -148,7 +145,7 @@ REPLY (respostas.txt, 1)
 ```
 
 <p align="justify">
-O ficheiro de entradas numeradas aceita **duas formas**, nunca misturadas dentro da mesma entrada — a forma escolhida para a entrada N é reconhecida automaticamente pelo que vem logo a seguir ao `N-`.
+O ficheiro de entradas numeradas aceita <b>duas formas</b>, nunca misturadas dentro da mesma entrada — a forma escolhida para a entrada N é reconhecida automaticamente pelo que vem logo a seguir ao <code>N-</code>.
 </p>
 
 ### Forma 1 — uma linha só (`N- valor`)
@@ -163,7 +160,7 @@ A forma original, para respostas curtas de uma linha:
 ```
 
 <p align="justify">
-`REPLY (respostas.txt, 1)` procura a linha que começa por `1-` e usa o texto a seguir ao traço, até ao fim da linha, como resposta.
+<code>REPLY (respostas.txt, 1)</code> procura a linha que começa por <code>1-</code> e usa o texto a seguir ao traço, até ao fim da linha, como resposta.
 </p>
 
 ### Forma 2 — bloco entre chaves (`N-{ ... }`)
@@ -182,7 +179,7 @@ Qual serviço você quer?
 ```
 
 <p align="justify">
-Tudo entre a `{` que abre e a `}` que fecha pertence à entrada — incluindo quebras de linha. A leitura é **rigorosa quanto ao aninhamento**: se o conteúdo lá dentro também tiver chaves (por exemplo um atributo `style="{color:red}"` dentro de HTML), essas chaves internas contam para o aninhamento e não fecham a entrada antes da hora — só fecha na `}` que corresponde exatamente à `{` que abriu:
+Tudo entre a <code>{</code> que abre e a <code>}</code> que fecha pertence à entrada — incluindo quebras de linha. A leitura é <b>rigorosa quanto ao aninhamento</b>: se o conteúdo lá dentro também tiver chaves (por exemplo um atributo <code>style="{color:red}"</code> dentro de HTML), essas chaves internas contam para o aninhamento e não fecham a entrada antes da hora — só fecha na <code>}</code> que corresponde exatamente à <code>{</code> que abriu:
 </p>
 
 ```
@@ -194,11 +191,11 @@ Tudo entre a `{` que abre e a `}` que fecha pertence à entrada — incluindo qu
 ```
 
 <p align="justify">
-Uma `{` sem a `}` correspondente antes do fim do ficheiro é erro — nunca é ignorado silenciosamente.
+Uma <code>{</code> sem a <code>}</code> correspondente antes do fim do ficheiro é erro — nunca é ignorado silenciosamente.
 </p>
 
 <p align="justify">
-Este é o mesmo formato de ficheiro usado por `IMPORT {ficheiro.txt, N}`, descrito a seguir — as duas formas (linha e bloco) valem também para `IMPORT`, e também para o ficheiro usado em `WAITING(...)`.
+Este é o mesmo formato de ficheiro usado por <code>IMPORT {ficheiro.txt, N}</code>, descrito a seguir — as duas formas (linha e bloco) valem também para <code>IMPORT</code>, e também para o ficheiro usado em <code>WAITING(...)</code>.
 </p>
 
 ---
@@ -218,7 +215,7 @@ RUN BOT
 ```
 
 <p align="justify">
-Tal como o `SOURCE` do cliente MySQL ou o `\i` do `psql`, isto não é uma funcionalidade da linguagem SQL em si — é o **interpretador do BotQL** que resolve: ao encontrar `IMPORT {ficheiro.sql}`, lê o ficheiro indicado e junta o conteúdo antes de processar o resto. Permite dividir um bot grande em vários ficheiros mais pequenos e organizados.
+Tal como o <code>SOURCE</code> do cliente MySQL ou o <code>\i</code> do <code>psql</code>, isto não é uma funcionalidade da linguagem SQL em si — é o <b>interpretador do BotQL</b> que resolve: ao encontrar <code>IMPORT {ficheiro.sql}</code>, lê o ficheiro indicado e junta o conteúdo antes de processar o resto. Permite dividir um bot grande em vários ficheiros mais pequenos e organizados.
 </p>
 
 - `IMPORT` é sempre resolvido antes de qualquer outro comando, independente de onde aparece no ficheiro.
@@ -231,11 +228,11 @@ IMPORT {env.txt, 1}
 ```
 
 <p align="justify">
-Diferente da forma acima: com um segundo argumento (o índice, depois da vírgula), o `IMPORT` **não** trata o ficheiro como código BotQL — lê só a entrada N do ficheiro (mesmo formato `N- valor` / `N-{ ... }` do `REPLY` indexado).
+Diferente da forma acima: com um segundo argumento (o índice, depois da vírgula), o <code>IMPORT</code> <b>não</b> trata o ficheiro como código BotQL — lê só a entrada N do ficheiro (mesmo formato <code>N- valor</code> / <code>N-{ ... }</code> do <code>REPLY</code> indexado).
 </p>
 
 <p align="justify">
-Sem `AS`, o valor lido fica na variável genérica `env` — o suficiente quando só há um segredo a importar. Se o bot precisa de mais que um (ex: token da IA e token do WhatsApp ao mesmo tempo), cada `IMPORT` deve ter o seu próprio alias, para não pisarem o mesmo nome:
+Sem <code>AS</code>, o valor lido fica na variável genérica <code>env</code> — o suficiente quando só há um segredo a importar. Se o bot precisa de mais que um (ex: token da IA e token do WhatsApp ao mesmo tempo), cada <code>IMPORT</code> deve ter o seu próprio alias, para não pisarem o mesmo nome:
 </p>
 
 ```sql
@@ -244,7 +241,7 @@ IMPORT {env.txt, 2} AS TOKEN_WHATSAPP
 ```
 
 <p align="justify">
-O alias é só uma etiqueta escolhida por quem escreve o `.sql` — pode ser uma letra só (`K`) ou um nome mais descritivo (`TOKEN_WHATSAPP`); o interpretador não olha para o texto, só usa para saber a que valor importado outros comandos (como `CONNECT RESPONSE`, a seguir) estão a apontar. Com `AS`, o valor fica acessível diretamente pelo nome do alias (ex: `K`) em qualquer expressão — sem `AS`, só é acessível como `env.NOME_FICHEIRO`.
+O alias é só uma etiqueta escolhida por quem escreve o <code>.sql</code> — pode ser uma letra só (<code>K</code>) ou um nome mais descritivo (<code>TOKEN_WHATSAPP</code>); o interpretador não olha para o texto, só usa para saber a que valor importado outros comandos (como <code>CONNECT RESPONSE</code>, a seguir) estão a apontar. Com <code>AS</code>, o valor fica acessível diretamente pelo nome do alias (ex: <code>K</code>) em qualquer expressão — sem <code>AS</code>, só é acessível como <code>env.NOME_FICHEIRO</code>.
 </p>
 
 ---
@@ -280,7 +277,7 @@ RUN BOT
 ```
 
 <p align="justify">
-Padrão de uso mais comum: `OTHERWISE { REPLY Response() }` — quando nenhuma regra `WHEN` cobre a mensagem, a IA entra como fallback inteligente, em vez de uma resposta fixa tipo "não percebi".
+Padrão de uso mais comum: <code>OTHERWISE { REPLY Response() }</code> — quando nenhuma regra <code>WHEN</code> cobre a mensagem, a IA entra como fallback inteligente, em vez de uma resposta fixa tipo "não percebi".
 </p>
 
 <p align="justify">
@@ -296,7 +293,7 @@ CONNECT RESPONSE B
 ```
 
 <p align="justify">
-`Response()` sozinho (sem argumento) só faz sentido quando há **uma** IA ligada — é ambíguo se houver mais que uma (o bot recusa com um erro que lista os aliases disponíveis). Com várias, `Response(<alias>)` diz exatamente qual delas usar nessa chamada:
+<code>Response()</code> sozinho (sem argumento) só faz sentido quando há <b>uma</b> IA ligada — é ambíguo se houver mais que uma (o bot recusa com um erro que lista os aliases disponíveis). Com várias, <code>Response(<alias>)</code> diz exatamente qual delas usar nessa chamada:
 </p>
 
 ```sql
@@ -316,7 +313,7 @@ ON MESSAGE {
 ```
 
 <p align="justify">
-O alias passado a `Response(...)` tem de corresponder a um `CONNECT RESPONSE <alias>` já feito antes no ficheiro — senão é erro.
+O alias passado a <code>Response(...)</code> tem de corresponder a um <code>CONNECT RESPONSE <alias></code> já feito antes no ficheiro — senão é erro.
 </p>
 
 ---
@@ -324,7 +321,7 @@ O alias passado a `Response(...)` tem de corresponder a um `CONNECT RESPONSE <al
 ## THINK: retrieval local sobre um ficheiro de conhecimento
 
 <p align="justify">
-Diferente de `REPLY (ficheiro, N)` (que devolve sempre a mesma entrada para o mesmo índice) e de `Response()` (que depende de uma IA externa ligada), `THINK` procura, **dentro do próprio dispositivo**, o conteúdo mais relevante para a mensagem recebida, num ficheiro de conhecimento em texto livre. Não usa IA, não sai para a rede, não precisa de `CONNECT` nenhum.
+Diferente de <code>REPLY (ficheiro, N)</code> (que devolve sempre a mesma entrada para o mesmo índice) e de <code>Response()</code> (que depende de uma IA externa ligada), <code>THINK</code> procura, <b>dentro do próprio dispositivo</b>, o conteúdo mais relevante para a mensagem recebida, num ficheiro de conhecimento em texto livre. Não usa IA, não sai para a rede, não precisa de <code>CONNECT</code> nenhum.
 </p>
 
 ```sql
@@ -350,11 +347,11 @@ O horario de atendimento e de segunda a sexta, das 8h as 18h.
 ### Comportamento
 
 <p align="justify">
-`THINK(ficheiro.txt)` sozinho já **é** a resposta quando encontra algo com confiança suficiente — não precisa de `REPLY THINK(...)` antes; o texto é enviado diretamente. Só o fallback (opcional, depois do `OR`) precisa da palavra `REPLY` de facto.
+<code>THINK(ficheiro.txt)</code> sozinho já <b>é</b> a resposta quando encontra algo com confiança suficiente — não precisa de <code>REPLY THINK(...)</code> antes; o texto é enviado diretamente. Só o fallback (opcional, depois do <code>OR</code>) precisa da palavra <code>REPLY</code> de facto.
 </p>
 
 <p align="justify">
-Quando a pergunta aponta claramente para uma parte do ficheiro de conhecimento, `THINK` responde direto com ela. Quando a resposta não é tão óbvia — por exemplo, mais de uma parte do ficheiro parece relevante para a mesma pergunta — `THINK` tenta perceber o motivo antes de decidir:
+Quando a pergunta aponta claramente para uma parte do ficheiro de conhecimento, <code>THINK</code> responde direto com ela. Quando a resposta não é tão óbvia — por exemplo, mais de uma parte do ficheiro parece relevante para a mesma pergunta — <code>THINK</code> tenta perceber o motivo antes de decidir:
 </p>
 
 - **Informação repetida.** Se as partes candidatas dizem basicamente a mesma coisa (a mesma informação escrita de duas formas), `THINK` responde com uma delas, sem repetir nem misturar as duas.
@@ -362,7 +359,7 @@ Quando a pergunta aponta claramente para uma parte do ficheiro de conhecimento, 
 - **Pergunta pouco clara.** Se nenhuma das situações acima se aplica e a dúvida continua, `THINK` tenta entender a pergunta de novo (focando no que é mais decisivo nela) antes de desistir.
 
 <p align="justify">
-Só depois de esgotar essas tentativas é que `THINK` considera que não tem uma resposta boa o suficiente:
+Só depois de esgotar essas tentativas é que <code>THINK</code> considera que não tem uma resposta boa o suficiente:
 </p>
 
 - Se, ainda assim, nada bater com confiança suficiente, corre o `REPLY (...)` a seguir ao `OR`, tal como qualquer `REPLY` normal.
@@ -371,15 +368,15 @@ Só depois de esgotar essas tentativas é que `THINK` considera que não tem uma
 ### WAITING: texto e animação enquanto algo demora
 
 <p align="justify">
-A busca do `THINK` não é instantânea como um `REPLY` comum — por isso, antes de procurar, `THINK` mostra um estado de "a processar" para quem está do outro lado da conversa. Por omissão, isto já funciona sem precisar de nada extra no `.sql`: um texto genérico tipo "Pensando..." e um tempo mínimo de 3 segundos, mesmo que a busca real seja mais rápida que isso — sem esse mínimo, a mensagem apareceria e desapareceria rápido demais para parecer natural.
+A busca do <code>THINK</code> não é instantânea como um <code>REPLY</code> comum — por isso, antes de procurar, <code>THINK</code> mostra um estado de "a processar" para quem está do outro lado da conversa. Por omissão, isto já funciona sem precisar de nada extra no <code>.sql</code>: um texto genérico tipo "Pensando..." e um tempo mínimo de 3 segundos, mesmo que a busca real seja mais rápida que isso — sem esse mínimo, a mensagem apareceria e desapareceria rápido demais para parecer natural.
 </p>
 
 <p align="justify">
-`WAITING(...)` personaliza esse comportamento, e tem duas formas de uso:
+<code>WAITING(...)</code> personaliza esse comportamento, e tem duas formas de uso:
 </p>
 
 <p align="justify">
-<strong>1. Acoplado a um `THINK`</strong>, encaixado logo a seguir a ele, antes do `OR` — aproveita o tempo da própria busca:
+<strong>1. Acoplado a um <code>THINK</code></strong>, encaixado logo a seguir a ele, antes do <code>OR</code> — aproveita o tempo da própria busca:
 </p>
 
 ```sql
@@ -388,7 +385,7 @@ REPLY (fallback.txt, 1)
 ```
 
 <p align="justify">
-<strong>2. Sozinho, como ação independente</strong> em qualquer lugar do bloco — útil antes de qualquer outra coisa que também possa demorar e não tenha aviso próprio, como `Response()` (uma IA externa):
+<strong>2. Sozinho, como ação independente</strong> em qualquer lugar do bloco — útil antes de qualquer outra coisa que também possa demorar e não tenha aviso próprio, como <code>Response()</code> (uma IA externa):
 </p>
 
 ```sql
@@ -406,7 +403,7 @@ Nos dois casos, os argumentos são os mesmos:
 - **Segundo argumento** (opcional) — segundos mínimos que esse estado fica visível, mesmo que a ação termine antes. Sem argumento (`WAITING()` ou só o texto/ficheiro), usa 3 segundos por omissão.
 
 <p align="justify">
-Quando usado com um ficheiro, este segue as mesmas regras de qualquer outro `.txt` do projeto — só `.txt` e `.sql` existem no sistema de ficheiros do BotQL, por isso uma animação em HTML/CSS fica escrita dentro de um `.txt` normal, não de um `.html` à parte:
+Quando usado com um ficheiro, este segue as mesmas regras de qualquer outro <code>.txt</code> do projeto — só <code>.txt</code> e <code>.sql</code> existem no sistema de ficheiros do BotQL, por isso uma animação em HTML/CSS fica escrita dentro de um <code>.txt</code> normal, não de um <code>.html</code> à parte:
 </p>
 
 ```
@@ -422,7 +419,7 @@ Plataformas que só mostram texto simples (como o WhatsApp) ignoram a marcação
 ### Como a relevância é calculada
 
 <p align="justify">
-O `THINK` combina vários sinais, todos calculados localmente:
+O <code>THINK</code> combina vários sinais, todos calculados localmente:
 </p>
 
 - **Frequência ponderada** — uma palavra rara da mensagem que aparece no conteúdo pesa mais do que uma palavra comum; repetições adicionais da mesma palavra contam cada vez menos.
@@ -431,7 +428,7 @@ O `THINK` combina vários sinais, todos calculados localmente:
 - **Variações de plural/sufixo** — "produtos" e "produto" contam como a mesma palavra.
 
 <p align="justify">
-O `THINK` **não** entende sinónimos que não partilhem raiz nem letras parecidas — "horas" e "horário" continuam a ser palavras diferentes para ele. Para esses casos, é possível ligar manualmente um termo a outro nas opções do interpretador.
+O <code>THINK</code> <b>não</b> entende sinónimos que não partilhem raiz nem letras parecidas — "horas" e "horário" continuam a ser palavras diferentes para ele. Para esses casos, é possível ligar manualmente um termo a outro nas opções do interpretador.
 </p>
 
 <p align="justify">
@@ -443,11 +440,11 @@ O ficheiro de conhecimento é lido e processado uma vez (e mantido em cache), n�
 ## DEFAULT MESSAGE: saudação automática ao primeiro contacto
 
 <p align="justify">
-Sem nenhuma integração de plataforma, o BotQL não tem como "falar primeiro" por conta própria — só reage quando `ON MESSAGE` dispara, ao receber algo. `DEFAULT MESSAGE` resolve isto de outra forma: em vez de depender de um evento de "conversa nova" (que nem toda plataforma expõe), usa o próprio banco de dados do bot para detetar se é a primeira vez que um `client` aparece.
+Sem nenhuma integração de plataforma, o BotQL não tem como "falar primeiro" por conta própria — só reage quando <code>ON MESSAGE</code> dispara, ao receber algo. <code>DEFAULT MESSAGE</code> resolve isto de outra forma: em vez de depender de um evento de "conversa nova" (que nem toda plataforma expõe), usa o próprio banco de dados do bot para detetar se é a primeira vez que um <code>client</code> aparece.
 </p>
 
 <p align="justify">
-`DEFAULT MESSAGE` é um modificador do `CREATE TABLE`, ao lado de `PREVENT DEFAULT`:
+<code>DEFAULT MESSAGE</code> é um modificador do <code>CREATE TABLE</code>, ao lado de <code>PREVENT DEFAULT</code>:
 </p>
 
 ```sql
@@ -456,7 +453,7 @@ DEFAULT MESSAGE "Ola! Bem-vindo."
 ```
 
 <p align="justify">
-Funciona da mesma forma com tabela manual, desde que a tabela tenha uma coluna para o remetente (`client` ou `sender`, o mesmo nome usado no `INSERT`/`VALUES` do `ON MESSAGE`):
+Funciona da mesma forma com tabela manual, desde que a tabela tenha uma coluna para o remetente (<code>client</code> ou <code>sender</code>, o mesmo nome usado no <code>INSERT</code>/<code>VALUES</code> do <code>ON MESSAGE</code>):
 </p>
 
 ```sql
@@ -471,7 +468,7 @@ DEFAULT MESSAGE "Ola! Bem-vindo."
 ```
 
 <p align="justify">
-Também aceita um ficheiro indexado, tal como `REPLY`:
+Também aceita um ficheiro indexado, tal como <code>REPLY</code>:
 </p>
 
 ```sql
@@ -481,7 +478,7 @@ DEFAULT MESSAGE (greets.txt, 1)
 ### Comportamento
 
 <p align="justify">
-Antes de correr o resto do `ON MESSAGE` (o `INSERT`, os `WHEN`, o `OTHERWISE`), o interpretador verifica se já existe alguma linha na tabela declarada com `DEFAULT MESSAGE` cujo valor do remetente bate com o `client` da mensagem recebida:
+Antes de correr o resto do <code>ON MESSAGE</code> (o <code>INSERT</code>, os <code>WHEN</code>, o <code>OTHERWISE</code>), o interpretador verifica se já existe alguma linha na tabela declarada com <code>DEFAULT MESSAGE</code> cujo valor do remetente bate com o <code>client</code> da mensagem recebida:
 </p>
 
 - Se **não existir nenhuma linha** — é a primeira mensagem desse remetente. O bot responde com a `DEFAULT MESSAGE` e **não** corre o resto do bloco dessa vez.
@@ -496,7 +493,7 @@ Isto significa que a saudação só depende dos dados que o próprio bot já gua
 ## A convenção `env.txt`
 
 <p align="justify">
-Para chaves de API, tokens, e qualquer outro dado sensível, a convenção do BotQL é concentrar tudo num único ficheiro chamado sempre `env.txt`, com uma entrada numerada por serviço:
+Para chaves de API, tokens, e qualquer outro dado sensível, a convenção do BotQL é concentrar tudo num único ficheiro chamado sempre <code>env.txt</code>, com uma entrada numerada por serviço:
 </p>
 
 ```
@@ -505,7 +502,7 @@ Para chaves de API, tokens, e qualquer outro dado sensível, a convenção do Bo
 ```
 
 <p align="justify">
-Cada `IMPORT {env.txt, N}` lê uma linha específica desse ficheiro. Isto mantém todos os segredos fora do `.sql` principal e fora de qualquer ficheiro que seja partilhado ou publicado — `env.txt` nunca deve ser enviado para um repositório público (ver secção seguinte).
+Cada <code>IMPORT {env.txt, N}</code> lê uma linha específica desse ficheiro. Isto mantém todos os segredos fora do <code>.sql</code> principal e fora de qualquer ficheiro que seja partilhado ou publicado — <code>env.txt</code> nunca deve ser enviado para um repositório público (ver secção seguinte).
 </p>
 
 ---
@@ -513,11 +510,11 @@ Cada `IMPORT {env.txt, N}` lê uma linha específica desse ficheiro. Isto manté
 ## Segurança: `env.txt` nunca vai para o repositório
 
 <p align="justify">
-Um projeto BotQL pode ser público no GitHub (o interpretador, o `.sql` principal, os ficheiros de respostas e keywords) sem nunca expor nenhuma chave de API — desde que `env.txt` fique de fora do repositório.
+Um projeto BotQL pode ser público no GitHub (o interpretador, o <code>.sql</code> principal, os ficheiros de respostas e keywords) sem nunca expor nenhuma chave de API — desde que <code>env.txt</code> fique de fora do repositório.
 </p>
 
 <p align="justify">
-Para isso, o projeto deve ter um `.gitignore` na raiz com a linha:
+Para isso, o projeto deve ter um <code>.gitignore</code> na raiz com a linha:
 </p>
 
 ```
@@ -525,7 +522,7 @@ env.txt
 ```
 
 <p align="justify">
-Isto diz ao Git para nunca acompanhar ou enviar esse ficheiro. Cada pessoa que usa o projeto cria o **próprio** `env.txt` localmente, com as suas próprias chaves — o ficheiro nunca é partilhado nem fica público, mesmo que todo o resto do projeto seja.
+Isto diz ao Git para nunca acompanhar ou enviar esse ficheiro. Cada pessoa que usa o projeto cria o <b>próprio</b> <code>env.txt</code> localmente, com as suas próprias chaves — o ficheiro nunca é partilhado nem fica público, mesmo que todo o resto do projeto seja.
 </p>
 
 ---
@@ -541,7 +538,7 @@ Isto diz ao Git para nunca acompanhar ou enviar esse ficheiro. Cada pessoa que u
 ## Variáveis implícitas
 
 <p align="justify">
-BotQL não usa notação de ponto (ex: `MESSAGE.TEXT` não existe). Em vez disso, usa variáveis simples, sempre disponíveis dentro do bloco `ON MESSAGE`:
+BotQL não usa notação de ponto (ex: <code>MESSAGE.TEXT</code> não existe). Em vez disso, usa variáveis simples, sempre disponíveis dentro do bloco <code>ON MESSAGE</code>:
 </p>
 
 | Variável | Descrição |
@@ -555,11 +552,11 @@ BotQL não usa notação de ponto (ex: `MESSAGE.TEXT` não existe). Em vez disso
 ## Integração com Banco de Dados
 
 <p align="justify">
-BotQL guarda dados reais de banco no mesmo ficheiro `.sql`, sem sair da linguagem. Há duas formas de criar uma tabela:
+BotQL guarda dados reais de banco no mesmo ficheiro <code>.sql</code>, sem sair da linguagem. Há duas formas de criar uma tabela:
 </p>
 
 <p align="justify">
-**1. Manual, com colunas explícitas:**
+<b>1. Manual, com colunas explícitas:</b>
 </p>
 
 ```sql
@@ -573,7 +570,7 @@ CREATE TABLE messages (
 ```
 
 <p align="justify">
-**2. Automática, via nome reservado `Context()`:**
+<b>2. Automática, via nome reservado <code>Context()</code>:</b>
 </p>
 
 ```sql
@@ -581,7 +578,7 @@ CREATE TABLE Context() PREVENT DEFAULT
 ```
 
 <p align="justify">
-Não é preciso declarar colunas — o interpretador já tem o schema de `Context()` pré-mapeado. O `INSERT` também é automático:
+Não é preciso declarar colunas — o interpretador já tem o schema de <code>Context()</code> pré-mapeado. O <code>INSERT</code> também é automático:
 </p>
 
 ```sql
@@ -589,13 +586,13 @@ INSERT INTO Context()
 ```
 
 <p align="justify">
-Sem parâmetros — o interpretador captura `client`, `message` e a data automaticamente, tal como o `CREATE TABLE Context()` dispensa colunas.
+Sem parâmetros — o interpretador captura <code>client</code>, <code>message</code> e a data automaticamente, tal como o <code>CREATE TABLE Context()</code> dispensa colunas.
 </p>
 
 ### Regra fixa de ordem — INSERT sempre primeiro, UPDATE sempre no fim
 
 <p align="justify">
-Dentro de um bloco `ON MESSAGE`, quando o bot precisa de guardar a mensagem recebida **e depois** guardar a resposta que deu, a ordem é sempre a mesma, sem exceção:
+Dentro de um bloco <code>ON MESSAGE</code>, quando o bot precisa de guardar a mensagem recebida <b>e depois</b> guardar a resposta que deu, a ordem é sempre a mesma, sem exceção:
 </p>
 
 1. `INSERT` acontece **logo no início** do bloco, antes de qualquer `WHEN` — guarda a mensagem recebida assim que ela chega.
@@ -630,7 +627,7 @@ ON MESSAGE {
 ```
 
 <p align="justify">
-O `UPDATE` não se repete dentro de cada `WHEN` — corre uma única vez, depois de decidida a resposta. Esta ordem (`INSERT` → `WHEN` → `UPDATE`) é a mesma em qualquer bot que precise de guardar pergunta e resposta juntas, incluindo quando se usa `Context()`.
+O <code>UPDATE</code> não se repete dentro de cada <code>WHEN</code> — corre uma única vez, depois de decidida a resposta. Esta ordem (<code>INSERT</code> → <code>WHEN</code> → <code>UPDATE</code>) é a mesma em qualquer bot que precise de guardar pergunta e resposta juntas, incluindo quando se usa <code>Context()</code>.
 </p>
 
 ---
@@ -733,7 +730,7 @@ RUN BOT
 ```
 
 <p align="justify">
-`saudacoes.txt`, no mesmo projeto:
+<code>saudacoes.txt</code>, no mesmo projeto:
 </p>
 
 ```
@@ -745,7 +742,7 @@ bom dia
 ```
 
 <p align="justify">
-`respostas.txt`, no mesmo projeto:
+<code>respostas.txt</code>, no mesmo projeto:
 </p>
 
 ```
@@ -810,7 +807,7 @@ RUN BOT
 ```
 
 <p align="justify">
-`env.txt`, no mesmo projeto (fora do repositório):
+<code>env.txt</code>, no mesmo projeto (fora do repositório):
 </p>
 
 ```
@@ -822,7 +819,7 @@ RUN BOT
 ## Exemplo 6 — Resposta com opções e bloco de HTML
 
 <p align="justify">
-Mostra as duas formas do ficheiro indexado lado a lado: entradas de uma linha (`N- texto`) e entradas em bloco (`N-{ ... }`) para respostas mais longas, com lista de opções ou HTML.
+Mostra as duas formas do ficheiro indexado lado a lado: entradas de uma linha (<code>N- texto</code>) e entradas em bloco (<code>N-{ ... }</code>) para respostas mais longas, com lista de opções ou HTML.
 </p>
 
 ```sql
@@ -851,7 +848,7 @@ RUN BOT
 ```
 
 <p align="justify">
-`respostas.txt`, no mesmo projeto:
+<code>respostas.txt</code>, no mesmo projeto:
 </p>
 
 ```
@@ -897,7 +894,7 @@ RUN BOT
 ```
 
 <p align="justify">
-`conhecimento.txt`, no mesmo projeto:
+<code>conhecimento.txt</code>, no mesmo projeto:
 </p>
 
 ```
@@ -911,7 +908,7 @@ O horario de atendimento e de segunda a sexta, das 8h as 18h.
 ```
 
 <p align="justify">
-`loading.txt`, no mesmo projeto:
+<code>loading.txt</code>, no mesmo projeto:
 </p>
 
 ```
@@ -919,7 +916,7 @@ A verificar a melhor resposta...
 ```
 
 <p align="justify">
-`fallback.txt`, no mesmo projeto:
+<code>fallback.txt</code>, no mesmo projeto:
 </p>
 
 ```
@@ -927,7 +924,7 @@ A verificar a melhor resposta...
 ```
 
 <p align="justify">
-Neste exemplo, a `DEFAULT MESSAGE` só é enviada na primeira mensagem de cada `client` novo (antes de qualquer `WHEN`/`THINK` correr); a partir da segunda mensagem desse mesmo remetente, o fluxo normal do `ON MESSAGE` já corre sempre.
+Neste exemplo, a <code>DEFAULT MESSAGE</code> só é enviada na primeira mensagem de cada <code>client</code> novo (antes de qualquer <code>WHEN</code>/<code>THINK</code> correr); a partir da segunda mensagem desse mesmo remetente, o fluxo normal do <code>ON MESSAGE</code> já corre sempre.
 </p>
 
 ---
@@ -961,7 +958,7 @@ Neste exemplo, a `DEFAULT MESSAGE` só é enviada na primeira mensagem de cada `
 ## Filosofia
 
 <p align="justify">
-BotQL não é uma linguagem de programação — é uma **linguagem de regras** para criar bots, tal como uma consulta SQL descreve o que queres buscar numa base de dados. Não precisas de saber programar para escrever BotQL; precisas apenas de saber o que queres que o teu bot faça.
+BotQL não é uma linguagem de programação — é uma <b>linguagem de regras</b> para criar bots, tal como uma consulta SQL descreve o que queres buscar numa base de dados. Não precisas de saber programar para escrever BotQL; precisas apenas de saber o que queres que o teu bot faça.
 </p>
 
 ---
@@ -969,9 +966,9 @@ BotQL não é uma linguagem de programação — é uma **linguagem de regras** 
 ## Onde o bot corre
 
 <p align="justify">
-O **interpretador** vive num sítio fixo (GitHub), e cada utilizador só precisa do seu próprio ficheiro `.sql` com as regras do bot. O interpretador lê e traduz esse ficheiro em ações reais.
+O <b>interpretador</b> vive num sítio fixo (GitHub), e cada utilizador só precisa do seu próprio ficheiro <code>.sql</code> com as regras do bot. O interpretador lê e traduz esse ficheiro em ações reais.
 </p>
 
 <p align="justify">
-O bot corre **localmente**, no computador ou servidor do próprio utilizador — não em servidores geridos por terceiros. Isto significa que o bot fica online enquanto esse processo estiver a correr; se o utilizador desligar o computador ou fechar o processo, o bot para. Manter o bot sempre online (por exemplo, com PM2, `screen`, ou um servidor próprio) é responsabilidade de quem o cria, tal como acontece com qualquer bot feito em Node.js puro.
+O bot corre <b>localmente</b>, no computador ou servidor do próprio utilizador — não em servidores geridos por terceiros. Isto significa que o bot fica online enquanto esse processo estiver a correr; se o utilizador desligar o computador ou fechar o processo, o bot para. Manter o bot sempre online (por exemplo, com PM2, <code>screen</code>, ou um servidor próprio) é responsabilidade de quem o cria, tal como acontece com qualquer bot feito em Node.js puro.
 </p>
