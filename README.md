@@ -55,17 +55,27 @@ npm install botql
 ```
 
 ```javascript
-const { BotQLInterpreter } = require('botql');
-
-const bot = BotQLInterpreter.fromSource(`
+// bot.sql
 CREATE BOT "MyBot"
 ON MESSAGE {
     WHEN CONTAINS "hello" REPLY "Hi!"
 }
 RUN BOT
-`);
+```
 
-bot.start();
+```javascript
+const { createBot } = require('botql');
+
+const bot = await createBot('bot.sql');
+await bot.receiveMessage('+244900000000', 'hello');
+```
+
+`createBot(sqlFilePath, options)` is the standard entry point: it loads the `.sql` file, wires up any `CONNECT`-ed platforms, runs `ON START`, and hands you back a bot that's ready to receive messages.
+
+You can also run a bot straight from the command line:
+
+```bash
+node node_modules/botql/createBot.js bot.sql
 ```
 
 ### Browser (CDN)
@@ -80,11 +90,27 @@ For websites, web apps, and in-browser editors — no build step required:
 <script src="https://unpkg.com/botql/botql.browser.js"></script>
 ```
 
+<p align="justify">
+    The browser bundle doesn't include <code>createBot()</code> (it depends on Node's <code>fs</code>/<code>path</code> to read <code>.sql</code> files and connectors). In the browser, use <code>BotQLInterpreter.fromSource(...)</code> directly with the source code as a string, and wire <code>onReply</code>/<code>onThinking</code>/etc yourself — see the JavaScript example below.
+</p>
+
 ---
 
 ## Usage
 
-### JavaScript
+### JavaScript — from a file (Node.js)
+
+```javascript
+const { createBot } = require('botql');
+
+const bot = await createBot('bot.sql', {
+    onReply: ({ text, client }) => console.log(client + ':', text),
+});
+
+await bot.receiveMessage('+244900000000', 'hello');
+```
+
+### JavaScript — from a source string (Node.js or browser)
 
 ```javascript
 const { BotQLInterpreter } = require('botql');
@@ -97,8 +123,10 @@ ON MESSAGE {
 RUN BOT
 `);
 
-bot.start();
-bot.receiveMessage('+244900000000', 'hello');
+bot.onReply = ({ text }) => console.log(text);
+
+await bot.start();
+await bot.receiveMessage('+244900000000', 'hello');
 ```
 
 ### JSX (React)
@@ -114,23 +142,21 @@ ON MESSAGE {
 RUN BOT
 `);
 
-bot.start();
+bot.onReply = ({ text }) => console.log(text);
+
+await bot.start();
 ```
 
 ### TypeScript
 
 ```typescript
-import { BotQLInterpreter } from 'botql';
+import { createBot } from 'botql';
 
-const bot = BotQLInterpreter.fromSource(`
-CREATE BOT "TSBot"
-ON MESSAGE {
-    WHEN CONTAINS "hello" REPLY "Hello from TypeScript!"
-}
-RUN BOT
-`);
+const bot = await createBot('bot.sql', {
+    onReply: ({ text }: { text: string }) => console.log(text),
+});
 
-bot.start();
+await bot.receiveMessage('+244900000000', 'hello');
 ```
 
 ### PHP
