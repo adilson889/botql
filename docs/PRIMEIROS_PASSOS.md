@@ -1,4 +1,4 @@
-# BotQL — Bot Query Language
+# BotQL: Bot Query Language
 
 <p align="justify">
 <b>BotQL</b> é uma <b>linguagem de regras</b> simples, inspirada em SQL, para criar bots sem precisar de escrever código tradicional.
