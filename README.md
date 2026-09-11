@@ -40,8 +40,7 @@
 
 Want to learn the full syntax, see all commands, and understand how BotQL works? The complete guide walks you through everything from your first bot to advanced features like local knowledge retrieval and AI integration.
 
-**[Read the full documentation (English) →](docs/GETSTARTED.md)**<br>
-<hr />
+**[Read the full documentation (English) →](docs/GETSTARTED.md)**<br><br>
 **[Leia a documentação completa (Português) →](docs/PRIMEIROS_PASSOS.md)**
 
 ---
