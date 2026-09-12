@@ -21,7 +21,7 @@
 
 const { Parser } = require('./Parser.js');
 const { MemoryDatabase } = require('./Database.js');
-const { createDefaultFileSystem } = require('./FileSystem.js');
+const { MemoryFileSystem, NodeFileSystem, createDefaultFileSystem } = require('./FileSystem.js');
 const { KnowledgeCache } = require('./RAG.js');
 
 const WAITING_TEXTO_PADRAO = null; // sem WAITING, ou WAITING() vazio: nenhum texto, só os pontinhos (ver index.html, mostrarDigitando)
@@ -962,4 +962,4 @@ throw new Error(`runtime error: unsupported expression: ${node.type}`);
 }
 }
 
-module.exports = { BotQLInterpreter, MemoryDatabase };
+module.exports = { BotQLInterpreter, MemoryDatabase, MemoryFileSystem, NodeFileSystem, createDefaultFileSystem };
