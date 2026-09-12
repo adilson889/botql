@@ -24,13 +24,10 @@ jobs:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Create browser bundle
         working-directory: /home/runner/work/botql/botql
         run: |
-          npx esbuild botql.js --bundle --format=iife --global-name=BotQL --outfile=botql.browser.js \
+          npx esbuild@0.23.1 botql.js --bundle --format=iife --global-name=BotQL --outfile=botql.browser.js \
             --external:fs --external:path --external:node:sqlite \
             --minify --legal-comments=none --drop:console --drop:debugger \
             --sourcemap=external
