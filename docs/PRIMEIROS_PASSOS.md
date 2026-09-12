@@ -71,6 +71,8 @@ RUN BOT
 | `THINK(ficheiro.txt)` | Faz retrieval local (sem IA, sem rede) sobre um ficheiro de conhecimento e responde com o conteúdo mais relevante, se a confiança for suficiente |
 | `THINK(ficheiro.txt) OR REPLY ...` | Mesmo que acima, com um fallback explícito para quando o `THINK` não consegue responder com confiança suficiente |
 | `WAITING(...)` | Mostra um texto/animação de "a processar" e segura por um tempo mínimo. Pode vir logo a seguir a um `THINK` (reaproveita o tempo da busca) ou sozinho, como ação independente antes de qualquer outra coisa lenta (ex: `Response()`) |
+| `SHOW CATALOG(ficheiro.txt)` | Mostra os itens de um ficheiro de catálogo — todas as categorias juntas, ou só uma com `CATEGORY("...")` |
+| `SHOW CATEGORY(ficheiro.txt)` | Sozinho (fora de um CATALOG): mostra só os nomes das categorias do ficheiro |
 
 ---
 
@@ -433,6 +435,66 @@ O <code>THINK</code> <b>não</b> entende sinónimos que não partilhem raiz nem 
 
 <p align="justify">
 O ficheiro de conhecimento é lido e processado uma vez (e mantido em cache), não a cada mensagem recebida.
+</p>
+
+---
+
+## SHOW CATALOG / SHOW CATEGORY: catálogo de produtos a partir de um ficheiro
+
+<p align="justify">
+Mostra os itens (ou as categorias) de um ficheiro de catálogo — útil para lojas, menus, listas de serviços. Duas formas:
+</p>
+
+<p align="justify">
+<b>1. <code>SHOW CATEGORY(ficheiro.txt)</code></b> — sozinho, sem estar preso a um <code>CATALOG</code>. Mostra só os <b>nomes</b> das categorias do ficheiro:
+</p>
+
+```sql
+WHEN CONTAINS "categorias" {
+    SHOW CATEGORY(catalogo.txt)
+}
+```
+
+<p align="justify">
+<b>2. <code>SHOW CATALOG(ficheiro.txt)</code></b> — mostra os itens (nome, preço, cor, imagem). Sem <code>CATEGORY</code>, mostra os itens de todas as categorias juntas; com <code>CATEGORY("...")</code>, só os dessa categoria:
+</p>
+
+```sql
+WHEN CONTAINS "tudo" {
+    SHOW CATALOG(catalogo.txt)
+}
+
+WHEN CONTAINS "bebidas" {
+    SHOW CATALOG(catalogo.txt) CATEGORY("Bebidas")
+}
+```
+
+<p align="justify">
+Formato do ficheiro de catálogo: um bloco por categoria, cada <code>ITEM</code> com nome entre aspas e modificadores opcionais <code>PRICE</code>, <code>COLOR</code> e <code>IMAGE</code>:
+</p>
+
+```
+Bebidas {
+    ITEM "Coca-Cola 350ml" PRICE "500 Kz"
+    ITEM "Sumo de manga" PRICE "450 Kz" COLOR "#F5A623"
+}
+
+Snacks {
+    ITEM "Batata frita" PRICE "700 Kz" COLOR "#F5D76E" IMAGE "batata.png"
+}
+```
+
+### Comportamento
+
+<p align="justify">
+Tal como o resto do BotQL, a resposta chega sempre em duas formas ao mesmo tempo, no mesmo evento — quem recebe é que escolhe qual usar:
+</p>
+
+- **Texto limpo**, sem marcação nenhuma — usado por plataformas de texto simples (WhatsApp, terminal).
+- **HTML autossuficiente**, com o próprio `<style>` embutido — usado pelo preview do editor e pelo chat de um Servidor BotQL.
+
+<p align="justify">
+Os cards de item vêm marcados com <code>data-botql-produto="Nome do item"</code>, e cada categoria (no <code>SHOW CATEGORY</code>) com <code>data-botql-categoria="Nome"</code>. O bot nunca executa nada sozinho a partir de um clique — só recebe, depois, a mensagem de texto normal que o próprio cliente enviar (é o host — o chat.html ou o preview — que decide o que escrever no campo de mensagem quando alguém toca num card).
 </p>
 
 ---
@@ -952,6 +1014,7 @@ Neste exemplo, a <code>DEFAULT MESSAGE</code> só é enviada na primeira mensage
 19. `THINK(ficheiro.txt)` sozinho já é a resposta quando encontra algo com confiança suficiente — não precisa de `REPLY` antes. Quando mais de uma parte do ficheiro parece relevante, `THINK` tenta primeiro perceber se é informação repetida ou complementar antes de decidir; só o fallback opcional (`OR REPLY ...`) precisa da palavra `REPLY`, e só corre quando `THINK` não consegue chegar a uma resposta com confiança suficiente.
 20. `WAITING(...)` tem duas formas de uso: acoplado a um `THINK`, sempre logo a seguir a ele e antes do `OR`; ou sozinho, como ação independente em qualquer lugar do bloco. Os dois argumentos são opcionais e independentes em ambas as formas: sem nenhum, usa texto e tempo padrão; com texto/ficheiro, personaliza só a mensagem/animação; com o segundo argumento também, personaliza o tempo mínimo (em segundos) junto.
 21. `DEFAULT MESSAGE`, quando usado, vai sempre dentro da declaração `CREATE TABLE`, ao lado de `PREVENT DEFAULT`. Aplica-se a qualquer `client`/`sender` que ainda não tenha nenhuma linha nessa tabela — nesse caso, o `ON MESSAGE` não corre o resto do bloco dessa vez, só responde com a mensagem padrão.
+22. `SHOW CATEGORY(ficheiro.txt)` sozinho mostra só nomes de categorias; `SHOW CATALOG(ficheiro.txt)` mostra itens, com `CATEGORY("...")` opcional para filtrar uma só. A resposta chega sempre com texto limpo e HTML autossuficiente juntos — quem recebe escolhe qual usar.
 
 ---
 
