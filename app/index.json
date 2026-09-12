@@ -1,1 +1,8 @@
-{}
+[
+  {
+    "id": "atendimento",
+    "nome": "Atendimento Básico",
+    "descricao": "Bot de saudação com resposta padrão para mensagens não reconhecidas.",
+    "arquivo": "atendimento.sql"
+  }
+]
