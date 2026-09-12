@@ -21,11 +21,22 @@
 
 const { Parser } = require('./Parser.js');
 const { MemoryDatabase } = require('./Database.js');
-const { MemoryFileSystem, NodeFileSystem, createDefaultFileSystem } = require('./FileSystem.js');
+const { createDefaultFileSystem } = require('./FileSystem.js');
 const { KnowledgeCache } = require('./RAG.js');
 
 const WAITING_TEXTO_PADRAO = null; // sem WAITING, ou WAITING() vazio: nenhum texto, só os pontinhos (ver index.html, mostrarDigitando)
 const WAITING_SEGUNDOS_PADRAO = 3;
+
+// Escape simples para os templates HTML gerados por SHOW CATALOG/CATEGORY
+// (nomes de produto/categoria vêm de ficheiro .txt escrito por quem faz o
+// bot, não confiar neles cegamente ao montar HTML).
+function escapeHtmlBotQL(s) {
+return String(s)
+.replace(/&/g, '&amp;')
+.replace(/</g, '&lt;')
+.replace(/>/g, '&gt;')
+.replace(/"/g, '&quot;');
+}
 
 // A base de dados em memória vive só em Database.js. Qualquer objeto com
 // os métodos createTable/insert/update/getRows pode ser passado como `db`
@@ -124,6 +135,7 @@ this._keywordsFileCache = new Map();
 // _keywordsFileCache acima. Reaproveitado também por
 // IMPORT {ficheiro.txt, N} — é o mesmo formato "N- valor" por linha.
 this._replyFileCache = new Map();
+this._catalogFileCache = new Map();
 
 // Valores carregados via IMPORT {ficheiro.txt, N}: nome do ficheiro
 // (sem extensão) -> valor lido. Ficam disponíveis em qualquer
@@ -482,6 +494,110 @@ return { text, seconds };
 // Resolve REPLY (ficheiro.txt, indice): lê o índice (número ou
 // expressão que resolve a número) e devolve o texto da entrada
 // correspondente do ficheiro de respostas.
+// Lê e faz cache de um ficheiro de catálogo (blocos "Categoria{ ITEM
+// ... }") — usado por SHOW CATALOG e SHOW CATEGORY. Formato simples de
+// atributos por ITEM (PRICE/COLOR/IMAGE, todos opcionais, em qualquer
+// ordem), sem chaves aninhadas — ao contrário do _loadIndexedFile, não
+// precisa de parser char-by-char.
+_loadCatalogFile(path, basePath) {
+if (this._catalogFileCache.has(path)) {
+return this._catalogFileCache.get(path);
+}
+
+const fullPath = this.fileSystem.resolve(basePath, path);
+if (!this.fileSystem.exists(fullPath)) {
+throw new Error(`runtime error: file not found: "${fullPath}"`);
+}
+
+const raw = this.fileSystem.readFile(fullPath);
+const categorias = this._parseCatalogFile(raw);
+this._catalogFileCache.set(path, categorias);
+return categorias;
+}
+
+_parseCatalogFile(raw) {
+const categorias = new Map(); // nome -> [{ nome, preco, cor, imagem }]
+const blocoRegex = /([^{}\n]+?)\s*\{([\s\S]*?)\}/g;
+let bloco;
+while ((bloco = blocoRegex.exec(raw)) !== null) {
+const nomeCategoria = bloco[1].trim();
+if (!nomeCategoria) continue;
+
+const itens = [];
+const itemRegex = /ITEM\s+"([^"]+)"([^\n]*)/g;
+let item;
+while ((item = itemRegex.exec(bloco[2])) !== null) {
+const resto = item[2];
+itens.push({
+nome: item[1],
+preco: (resto.match(/PRICE\s+"([^"]+)"/) || [])[1] || null,
+cor: (resto.match(/COLOR\s+"([^"]+)"/) || [])[1] || null,
+imagem: (resto.match(/IMAGE\s+"([^"]+)"/) || [])[1] || null
+});
+}
+categorias.set(nomeCategoria, itens);
+}
+return categorias;
+}
+
+// Formata a lista de itens nos dois formatos que qualquer ambiente
+// pode precisar — nunca dois canais separados, os dois vivem no mesmo
+// evento onReply (ver execStatement, casos 'ShowCatalog'/'ShowCategory'):
+//   texto — lista plana numerada, sem emoji nenhum, é o que aparece no
+//           WhatsApp real e no terminal (Terminal.js só usa "text" e
+//           nem sabe que "html" existe).
+//   html  — grelha de cards com <style> embutido (mesmo padrão do teste
+//           manual já validado no chat.html), autossuficiente — não
+//           depende de CSS nenhum do lado do host. Cada card leva
+//           data-botql-produto="Nome" em vez de onclick — o clique/
+//           seleção é responsabilidade do host (ver chat.html), que já
+//           trata esse atributo; layout e cor são deste template.
+_formatarCatalogo(itens) {
+const texto = itens
+.map((it, i) => `${i + 1}. ${it.nome}` + (it.preco ? ` - ${it.preco}` : ''))
+.join('\n');
+
+const cards = itens.map((it) => {
+const nomeEsc = escapeHtmlBotQL(it.nome);
+const imgOuCor = it.imagem
+? `<img src="${escapeHtmlBotQL(it.imagem)}" alt="${nomeEsc}">`
+: `<div class="catalogo-cor" style="background:${escapeHtmlBotQL(it.cor || '#DDD5CB')}"></div>`;
+return `<div class="catalogo-item" data-botql-produto="${nomeEsc}">` +
+imgOuCor +
+`<div class="catalogo-nome">${nomeEsc}</div>` +
+(it.preco ? `<div class="catalogo-preco">${escapeHtmlBotQL(it.preco)}</div>` : '') +
+`</div>`;
+}).join('');
+
+const html = `<style>
+.catalogo-grelha{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.catalogo-item{background:#FFFFFF;border:1px solid #DDD5CB;border-radius:8px;padding:8px;text-align:center;font-family:'Times New Roman',Times,serif}
+.catalogo-item img,.catalogo-item .catalogo-cor{width:100%;height:70px;border-radius:6px;margin-bottom:6px;object-fit:cover}
+.catalogo-nome{font-size:13px;font-weight:bold;color:#1A1A1A;margin-bottom:2px}
+.catalogo-preco{font-size:12px;color:#8B0000;font-weight:bold}
+</style><div class="catalogo-grelha">${cards}</div>`;
+return { texto, html };
+}
+
+// Mesma ideia, para SHOW CATEGORY: lista só os nomes das categorias,
+// com <style> embutido também. <div>, não <button> — o chat.html
+// público bloqueia <button> no DOMPurify (ver HTML_PERMITIDO,
+// FORBID_TAGS). Tocar numa delas envia o nome como mensagem normal (é
+// o host que decide isso, ver index.html/chat.html), reaproveitando o
+// CONTAINS que já existe em vez de precisar de um mecanismo novo.
+_formatarCategorias(nomes) {
+const texto = nomes.map((n, i) => `${i + 1}. ${n}`).join('\n');
+const divs = nomes.map((n) => {
+const nomeEsc = escapeHtmlBotQL(n);
+return `<div class="catalogo-categoria" role="button" data-botql-categoria="${nomeEsc}">${nomeEsc}</div>`;
+}).join('');
+const html = `<style>
+.catalogo-categorias{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.catalogo-categoria{background:#FFFFFF;border:1px solid #DDD5CB;border-radius:20px;padding:8px 16px;font-family:'Times New Roman',Times,serif;font-size:14px;color:#1A1A1A}
+</style><div class="catalogo-categorias">${divs}</div>`;
+return { texto, html };
+}
+
 resolveReplyFromFile(file, indexNode, ctx) {const index = this.evalExpr(indexNode, ctx);
 const entries = this._loadIndexedFile(file, this._rootBasePath);
 const text = entries.get(Number(index));
@@ -673,6 +789,33 @@ await this.onSend({ target: stmt.target, signal: ctx.vars.SIGNAL });
 break;
 }
 
+case 'ShowCatalog': {
+const categorias = this._loadCatalogFile(stmt.file, this._rootBasePath);
+let itens;
+if (stmt.category) {
+itens = categorias.get(stmt.category) || [];
+} else {
+itens = [].concat(...categorias.values());
+}
+const { texto, html } = this._formatarCatalogo(itens);
+ctx.vars.lastMsg = texto;
+if (this.onReply) {
+await this.onReply({ target: null, text: texto, html, client: ctx.vars.client });
+}
+break;
+}
+
+case 'ShowCategory': {
+const categorias = this._loadCatalogFile(stmt.file, this._rootBasePath);
+const nomes = [...categorias.keys()];
+const { texto, html } = this._formatarCategorias(nomes);
+ctx.vars.lastMsg = texto;
+if (this.onReply) {
+await this.onReply({ target: null, text: texto, html, client: ctx.vars.client });
+}
+break;
+}
+
 case 'Insert': {
 this.execInsert(stmt, ctx);
 break;
@@ -819,4 +962,4 @@ throw new Error(`runtime error: unsupported expression: ${node.type}`);
 }
 }
 
-module.exports = { BotQLInterpreter, MemoryDatabase, MemoryFileSystem, NodeFileSystem, createDefaultFileSystem };
+module.exports = { BotQLInterpreter, MemoryDatabase };
