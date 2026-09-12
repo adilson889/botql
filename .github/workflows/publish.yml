@@ -7,26 +7,35 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+  id-token: write   # necessário para o "provenance" do npm publish abaixo
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
-      
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Create browser bundle
         working-directory: /home/runner/work/botql/botql
         run: |
           npx esbuild botql.js --bundle --format=iife --global-name=BotQL --outfile=botql.browser.js \
-            --external:fs --external:path --external:node:sqlite
-      
+            --external:fs --external:path --external:node:sqlite \
+            --minify --legal-comments=none --drop:console --drop:debugger \
+            --sourcemap=external
+
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
