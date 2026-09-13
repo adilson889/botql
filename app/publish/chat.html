@@ -204,6 +204,25 @@ border-radius: 8px;
 .msg.sistema.markdown .hljs-addition { color: #aff5b4; background-color: #033a16; }
 .msg.sistema.markdown .hljs-deletion { color: #ffdcd7; background-color: #67060c; }
 
+/* Produto/categoria do catálogo (SHOW CATALOG/CATEGORY): o bot envia
+só os data-*, quem trata o clique e' este chat.html -- o bot nunca
+executa nada, so' recebe depois o texto final que o visitante enviar. */
+.msg.sistema.markdown [data-botql-produto],
+.msg.sistema.markdown [data-botql-categoria] {
+cursor: pointer;
+transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+user-select: none;
+}
+.msg.sistema.markdown [data-botql-produto]:active,
+.msg.sistema.markdown [data-botql-categoria]:active {
+transform: scale(0.98);
+}
+.msg.sistema.markdown [data-botql-produto].selecionado {
+border: 2px solid var(--r);
+box-shadow: 0 0 0 2px rgba(139,0,0,0.18);
+transform: scale(1.02);
+}
+
 .msg.digitando {
 align-self: flex-start;
 color: var(--bot-texto);
@@ -737,6 +756,10 @@ abrirModal(titulo, corpo,
 
 // ---- Chat ----
 let proximoIdMensagem = 0;
+// Nomes dos produtos ja tocados (SHOW CATALOG) -- toque so alterna
+// selecao e prepara o texto do input; enviar fica por conta do
+// visitante, permitindo escolher varios antes de confirmar.
+const produtosSelecionados = new Set();
 
 // Usa rAF (duas vezes: uma para o layout do que acabou de entrar no
 // DOM, outra para garantir que imagens/blocos ja tiveram o reflow
@@ -750,11 +773,33 @@ chatEl.scrollTop = chatEl.scrollHeight;
 });
 }
 
-function adicionarMensagem(texto, classe, markdown) {
+// markdown=true renderiza texto como Markdown (resposta "de verdade"
+// do bot). html, quando vem preenchido (SHOW CATALOG/CATEGORY), tem
+// prioridade -- e' HTML ja pronto do botql.js, nao texto a interpretar
+// como Markdown (marked bagunçaria as tags/atributos data-botql-*).
+function adicionarMensagem(texto, classe, markdown, html) {
 const d = document.createElement('div');
 d.className = 'msg ' + classe;
 
-if (markdown && typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+if (html && typeof DOMPurify !== 'undefined') {
+d.classList.add('markdown');
+try {
+d.innerHTML = DOMPurify.sanitize(html, HTML_PERMITIDO);
+if (typeof hljs !== 'undefined') {
+d.querySelectorAll('pre code').forEach((b) => {
+try { hljs.highlightElement(b); } catch (e) {}
+});
+}
+d.querySelectorAll('pre').forEach((blocoPre) => {
+adicionarBotaoCopiarCodigo(blocoPre);
+});
+d.querySelectorAll('img').forEach((img) => {
+img.addEventListener('load', rolarParaFim);
+});
+} catch (e) {
+d.textContent = texto;
+}
+} else if (markdown && typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
 d.classList.add('markdown');
 try {
 const htmlBruto = marked.parse(texto);
@@ -935,7 +980,7 @@ return;
 
 const data = await res.json();
 if (data.resposta) {
-adicionarMensagem(data.resposta, 'sistema', true);
+adicionarMensagem(data.resposta, 'sistema', true, data.html);
 }
 } catch (e) {
 esconderDigitando();
@@ -948,6 +993,35 @@ btnEnviar.disabled = false;
 inputEl.focus();
 }
 }
+
+// ---- Catalogo (SHOW CATALOG/CATEGORY) ----
+// Produto: alterna selecao visual e escreve "quero comprar: A, B" no
+// input, sem enviar -- da para escolher varios antes de confirmar.
+// Categoria: preenche o input com o nome e envia logo, e' navegacao
+// (reaproveita o CONTAINS que o bot ja tem, nao um mecanismo novo).
+chatEl.addEventListener('click', (e) => {
+const produtoEl = e.target.closest('[data-botql-produto]');
+if (produtoEl) {
+const nome = produtoEl.dataset.botqlProduto;
+if (produtosSelecionados.has(nome)) {
+produtosSelecionados.delete(nome);
+} else {
+produtosSelecionados.add(nome);
+}
+produtoEl.classList.toggle('selecionado', produtosSelecionados.has(nome));
+inputEl.value = produtosSelecionados.size
+? 'quero comprar: ' + [...produtosSelecionados].join(', ')
+: '';
+ajustarAltura();
+return;
+}
+
+const categoriaEl = e.target.closest('[data-botql-categoria]');
+if (categoriaEl) {
+inputEl.value = categoriaEl.dataset.botqlCategoria;
+enviar();
+}
+});
 
 // ---- Sidebar ----
 function abrirSidebar() {
@@ -978,6 +1052,7 @@ abrirModal('Limpar conversa', 'Apagar todas as mensagens desta conversa?',
 }
 function confirmarLimparConversa() {
 chatEl.innerHTML = '';
+produtosSelecionados.clear();
 fecharModal();
 }
 function anexarFicheiro() { modalAviso('Anexar ficheiro', 'Ainda não disponível.'); }
