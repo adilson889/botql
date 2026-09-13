@@ -651,18 +651,31 @@ Baixar o app
 // =====================================================================
 // chat.html — interface pública do bot.
 //
-// Dois modos, decididos pelos parâmetros da própria URL:
+// Três modos, decididos pelos parâmetros da própria URL, verificados
+// nesta ordem de prioridade:
+//
+//   ?id=<8 caracteres>
+//     Modo API (atual, recomendado). Busca { nome, sql, arquivos,
+//     pausado } em GET /api/botql/:id (Vercel + repo privado no
+//     GitHub). Link curto e ESTÁVEL: editar/pausar o bot depois de
+//     partilhado atualiza automaticamente quem já tem o link, sem
+//     precisar repartilhar nada. Corre o interpretador aqui mesmo, no
+//     browser do visitante — sem depender do telemóvel do dono estar
+//     ligado.
 //
 //   ?bot=<base64url(deflate(json))>
-//     Modo CLIENT-SIDE (novo, sem servidor nem túnel). O JSON contém
-//     { nome, sql, arquivos }. Carrega botql.browser.js do CDN e corre
-//     o interpretador aqui mesmo, no browser do visitante.
+//     Modo CLIENT-SIDE antigo. O bot inteiro (nome+sql+arquivos) vai
+//     codificado na própria URL — link mais longo, e uma cópia fixa
+//     (editar o bot depois não afeta links já distribuídos com este
+//     parâmetro). Mantido só por compatibilidade com links já
+//     partilhados antes da API existir; não é mais o caminho usado
+//     para gerar links novos.
 //
 //   ?servidor=<url>
-//     Modo TÚNEL (antigo, mantido como alternativa). Fala por fetch
-//     com o servidor local do dono do bot, via cloudflared.
+//     Modo TÚNEL, mais antigo ainda. Fala por fetch com o servidor
+//     local do dono do bot. Mantido como último recurso.
 //
-// Sem nenhum dos dois parâmetros, o chat não tem com quem falar.
+// Sem nenhum dos três, o chat não tem com quem falar.
 // =====================================================================
 
 const chatEl = document.getElementById('chat');
@@ -716,13 +729,21 @@ CLIENTE = 'v-' + Math.random().toString(36).slice(2, 10);
 localStorage.setItem(STORAGE_CLIENTE, CLIENTE);
 }
 
+// Base da API própria (Vercel + botql-routes.js, mesmo repo privado
+// já usado por equipe/premium/loja). Só entra em jogo no modo ?id=.
+const URL_API_BOTQL = 'https://sire-kixikila-api.vercel.app';
+
 const params = new URLSearchParams(window.location.search);
 let URL_SERVIDOR = params.get('servidor') || '';
 if (URL_SERVIDOR.endsWith('/')) URL_SERVIDOR = URL_SERVIDOR.slice(0, -1);
 const DADOS_BOT_CODIFICADOS = params.get('bot') || '';
+const ID_BOT = params.get('id') || '';
 
-// MODO_CLIENTE = true quando o bot corre aqui mesmo, sem rede.
-let MODO_CLIENTE = !!DADOS_BOT_CODIFICADOS;
+// MODO_CLIENTE = true sempre que o bot corre aqui mesmo, sem fetch a
+// um servidor "ao vivo" (cobre tanto ?id= quanto ?bot=). Só ?servidor=
+// fica de fora disto, porque esse modo ainda depende de um servidor
+// externo responder a cada mensagem.
+let MODO_CLIENTE = !!ID_BOT || !!DADOS_BOT_CODIFICADOS;
 let botInstancia = null;
 
 // ---- Descompressão do link (?bot=) ----
@@ -776,24 +797,15 @@ function esconderTelaCarregando() {
 telaCarregando.style.display = 'none';
 }
 
-async function iniciarModoCliente() {
-try {
-if (typeof DecompressionStream === 'undefined') {
-throw new Error('este navegador não suporta descompressão nativa — atualiza o navegador e tenta novamente');
-}
-
-textoCarregando.textContent = 'A carregar o motor do bot...';
-const bytes = base64UrlParaBytes(DADOS_BOT_CODIFICADOS);
-const jsonTexto = await descomprimir(bytes);
-const dados = JSON.parse(jsonTexto);
-
+// Roda o interpretador com { nome, sql, arquivos } já resolvidos — o
+// mesmo passo final tanto para ?id= (depois do fetch) quanto para
+// ?bot= (depois de descomprimir). Mantém a lógica de arrancar o bot
+// escrita só uma vez.
+async function correrBotComDados(dados) {
 await carregarMotorBotQL();
 
 const nomeBot = dados.nome || 'Bot';
 definirNomeBot(nomeBot);
-if (document.querySelectorAll('.titulo, #sidebar-cabecalho').length) {
-// já aplicado acima
-}
 
 textoCarregando.textContent = 'A iniciar o bot...';
 const fileSystem = new BotQL.MemoryFileSystem(dados.arquivos || {});
@@ -821,6 +833,62 @@ botInstancia = bot;
 
 esconderTelaCarregando();
 inputEl.focus();
+}
+
+// ---- Modo API (?id=) ----
+// Busca o bot atual em GET /api/botql/:id a cada abertura -- se o
+// dono pausou ou editou depois de partilhar o link, esta chamada já
+// reflete isso, sem o visitante precisar de um link novo.
+async function iniciarModoId() {
+try {
+textoCarregando.textContent = 'A carregar o bot...';
+const resp = await fetch(URL_API_BOTQL + '/api/botql/' + encodeURIComponent(ID_BOT));
+
+if (resp.status === 404) {
+throw new Error('este link já não existe — o bot pode ter sido removido');
+}
+if (!resp.ok) {
+throw new Error('não foi possível carregar este bot agora (erro ' + resp.status + ')');
+}
+
+const dados = await resp.json();
+if (!dados.sucesso) {
+throw new Error(dados.erro || 'resposta inesperada da API');
+}
+
+if (dados.pausado) {
+esconderTelaCarregando();
+definirNomeBot(dados.nome || 'Bot');
+adicionarMensagem(
+'Este bot está pausado no momento. Quem o criou pode reativá-lo mais tarde.',
+'sistema', false
+);
+return;
+}
+
+await correrBotComDados(dados);
+} catch (e) {
+esconderTelaCarregando();
+adicionarMensagem(
+'Não foi possível carregar este bot: ' + (e.message || String(e)),
+'sistema', false
+);
+}
+}
+
+// ---- Modo client-side antigo (?bot=) ----
+async function iniciarModoBotCodificado() {
+try {
+if (typeof DecompressionStream === 'undefined') {
+throw new Error('este navegador não suporta descompressão nativa — atualiza o navegador e tenta novamente');
+}
+
+textoCarregando.textContent = 'A carregar o motor do bot...';
+const bytes = base64UrlParaBytes(DADOS_BOT_CODIFICADOS);
+const jsonTexto = await descomprimir(bytes);
+const dados = JSON.parse(jsonTexto);
+
+await correrBotComDados(dados);
 } catch (e) {
 esconderTelaCarregando();
 adicionarMensagem(
@@ -841,8 +909,10 @@ fetch(URL_SERVIDOR + '/estado')
 .catch(() => {});
 }
 
-if (MODO_CLIENTE) {
-iniciarModoCliente();
+if (ID_BOT) {
+iniciarModoId();
+} else if (DADOS_BOT_CODIFICADOS) {
+iniciarModoBotCodificado();
 } else if (URL_SERVIDOR) {
 esconderTelaCarregando();
 } else {
@@ -1022,9 +1092,9 @@ cabecalho.appendChild(btn);
 blocoPre.insertBefore(cabecalho, blocoPre.firstChild);
 }
 
-// Feedback: em modo cliente não há para onde enviar (não há servidor
-// nem dono online) — fica só local, um toast de agradecimento, sem
-// tentativa de rede que ia falhar sempre.
+// Feedback: em modo cliente (?id= ou ?bot=) não há para onde enviar —
+// fica só local, um toast de agradecimento, sem tentativa de rede que
+// ia falhar sempre. Só o modo túnel (?servidor=) envia de verdade.
 async function registarFeedback(idMsg, textoOriginal, tipo, botaoClicado, acoesEl) {
 const jaAtivo = botaoClicado.classList.contains('ativo');
 const novoValor = jaAtivo ? null : tipo;
