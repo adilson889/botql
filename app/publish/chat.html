@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>{{BOT_NOME}}</title>
+<style>
+:root {
+--bg: #F4EFE9;
+--bg2: #FFFFFF;
+--bg3: #EBE5DD;
+--border: #DDD5CB;
+--text: #1A1A1A;
+--muted: #7A6A5E;
+--r: #8B0000;
+--r2: #A52A2A;
+--bot-texto: #1A1A1A;
+--bot-tamanho: 17px;
+}
+
+/* Tema escuro — troca só as variáveis, o resto herda */
+.tema-escuro {
+--bg: #1A1A1A;
+--bg2: #2A2A2A;
+--bg3: #333333;
+--border: #444444;
+--text: #F4EFE9;
+--muted: #A89A8E;
+--r: #C62828;
+--r2: #E53935;
+--bot-texto: #F4EFE9;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+background: var(--bg);
+color: var(--text);
+font-family: 'Times New Roman', Times, serif;
+height: 100%;
+overflow: hidden;
+transition: background 0.2s, color 0.2s;
+}
+
+#statusbar {
+background: var(--r);
+padding: 12px 16px;
+display: flex;
+align-items: center;
+gap: 12px;
+flex-shrink: 0;
+position: relative;
+z-index: 10;
+}
+#btn-menu {
+width: 26px; height: 26px;
+background: none; border: none; padding: 0;
+cursor: pointer; flex-shrink: 0;
+}
+#btn-menu svg { width: 100%; height: 100%; }
+#statusbar .titulo {
+color: #fff;
+font-weight: bold;
+font-size: 15px;
+letter-spacing: 2px;
+text-transform: uppercase;
+flex: 1;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+
+#chat {
+flex: 1;
+overflow-y: auto;
+padding: 14px 14px 150px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+height: calc(100% - 50px);
+}
+.msg {
+line-height: 1.6;
+overflow-wrap: break-word;
+word-break: break-word;
+white-space: pre-line;
+}
+.msg.sistema {
+align-self: flex-start;
+color: var(--bot-texto);
+font-weight: normal;
+font-size: var(--bot-tamanho);
+width: 100%;
+text-align: justify;
+}
+.msg.usuario {
+align-self: flex-end;
+max-width: 85%;
+background: var(--r);
+color: #fff;
+padding: 8px 14px;
+border-radius: 18px 18px 4px 18px;
+font-size: 14px;
+font-weight: normal;
+}
+
+/* Conteúdo renderizado (markdown + HTML sanitizado) */
+.msg.sistema.markdown { white-space: normal; }
+.msg.sistema.markdown p { margin: 0 0 8px; font-weight: normal; }
+.msg.sistema.markdown p:last-child { margin-bottom: 0; }
+.msg.sistema.markdown ul,
+.msg.sistema.markdown ol { margin: 4px 0 8px; padding-left: 22px; font-weight: normal; }
+.msg.sistema.markdown li { margin-bottom: 2px; }
+.msg.sistema.markdown strong { font-weight: bold; }
+.msg.sistema.markdown em { font-style: italic; }
+.msg.sistema.markdown a { color: var(--r); text-decoration: underline; }
+.msg.sistema.markdown code {
+background: rgba(139,0,0,0.08);
+padding: 2px 5px;
+border-radius: 4px;
+font-family: ui-monospace, Menlo, Consolas, monospace;
+font-size: 0.9em;
+font-weight: normal;
+}
+.msg.sistema.markdown pre {
+background: #0d1117;
+border-radius: 8px;
+overflow: hidden;
+margin: 6px 0;
+}
+.msg.sistema.markdown pre code {
+display: block;
+background: transparent;
+padding: 10px;
+overflow-x: auto;
+color: #c9d1d9;
+}
+.msg.sistema.markdown blockquote {
+border-left: 3px solid var(--r);
+margin: 6px 0;
+padding: 2px 10px;
+font-weight: normal;
+opacity: 0.85;
+}
+.msg.sistema.markdown table {
+border-collapse: collapse;
+margin: 8px 0;
+font-size: 15px;
+font-weight: normal;
+}
+.msg.sistema.markdown th,
+.msg.sistema.markdown td {
+border: 1px solid var(--border);
+padding: 6px 10px;
+text-align: left;
+}
+.msg.sistema.markdown th {
+background: var(--bg3);
+font-weight: bold;
+}
+.msg.sistema.markdown img {
+max-width: 100%;
+height: auto;
+border-radius: 8px;
+}
+
+/* Tema de cores do highlight.js (GitHub Dark) */
+.msg.sistema.markdown pre code.hljs { display: block; overflow-x: auto; }
+.msg.sistema.markdown .hljs { color: #c9d1d9; background: #0d1117; }
+.msg.sistema.markdown .hljs-doctag,
+.msg.sistema.markdown .hljs-keyword,
+.msg.sistema.markdown .hljs-meta .hljs-keyword,
+.msg.sistema.markdown .hljs-template-tag,
+.msg.sistema.markdown .hljs-template-variable,
+.msg.sistema.markdown .hljs-type { color: #ff7b72; }
+.msg.sistema.markdown .hljs-title { color: #d2a8ff; }
+.msg.sistema.markdown .hljs-attr,
+.msg.sistema.markdown .hljs-attribute,
+.msg.sistema.markdown .hljs-literal,
+.msg.sistema.markdown .hljs-meta,
+.msg.sistema.markdown .hljs-number,
+.msg.sistema.markdown .hljs-selector-attr,
+.msg.sistema.markdown .hljs-selector-class,
+.msg.sistema.markdown .hljs-selector-id,
+.msg.sistema.markdown .hljs-variable { color: #79c0ff; }
+.msg.sistema.markdown .hljs-meta .hljs-string,
+.msg.sistema.markdown .hljs-regexp,
+.msg.sistema.markdown .hljs-string { color: #a5d6ff; }
+.msg.sistema.markdown .hljs-built_in,
+.msg.sistema.markdown .hljs-class .hljs-title,
+.msg.sistema.markdown .hljs-symbol,
+.msg.sistema.markdown .hljs-title.class_ { color: #ffa657; }
+.msg.sistema.markdown .hljs-code,
+.msg.sistema.markdown .hljs-comment,
+.msg.sistema.markdown .hljs-formula { color: #8b949e; }
+.msg.sistema.markdown .hljs-name,
+.msg.sistema.markdown .hljs-quote,
+.msg.sistema.markdown .hljs-selector-pseudo,
+.msg.sistema.markdown .hljs-selector-tag { color: #7ee787; }
+.msg.sistema.markdown .hljs-subst { color: #c9d1d9; }
+.msg.sistema.markdown .hljs-section { color: #79c0ff; font-weight: 700; }
+.msg.sistema.markdown .hljs-bullet { color: #f2cc60; }
+.msg.sistema.markdown .hljs-emphasis { color: #c9d1d9; font-style: italic; }
+.msg.sistema.markdown .hljs-strong { color: #c9d1d9; font-weight: 700; }
+.msg.sistema.markdown .hljs-addition { color: #aff5b4; background-color: #033a16; }
+.msg.sistema.markdown .hljs-deletion { color: #ffdcd7; background-color: #67060c; }
+
+.msg.digitando {
+align-self: flex-start;
+color: var(--bot-texto);
+font-weight: normal;
+font-size: var(--bot-tamanho);
+padding: 4px 0;
+display: flex;
+align-items: center;
+gap: 4px;
+width: fit-content;
+}
+.msg.digitando .ponto {
+width: 7px; height: 7px;
+border-radius: 50%;
+background: var(--bot-texto);
+animation: bounce 1.2s infinite ease-in-out;
+}
+.msg.digitando .ponto:nth-child(2) { animation-delay: 0.15s; }
+.msg.digitando .ponto:nth-child(3) { animation-delay: 0.3s; }
+@keyframes bounce {
+0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Acoes por baixo de cada resposta do bot: copiar, gostei, nao gostei */
+.msg-acoes {
+display: flex;
+align-items: center;
+gap: 4px;
+margin: 2px 0 6px;
+align-self: flex-start;
+}
+.msg-acao {
+width: 30px; height: 30px;
+border: none;
+background: transparent;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+padding: 0;
+color: var(--muted);
+}
+.msg-acao:active { background: var(--bg3); }
+.msg-acao svg { width: 16px; height: 16px; }
+.msg-acao.ativo { color: var(--r); }
+.msg-acao.ativo svg path { fill: var(--r); }
+
+/* Cabecalho do bloco de codigo: linguagem + copiar, numa faixa propria */
+.msg.sistema.markdown pre { position: relative; }
+.cabecalho-codigo {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 8px 12px;
+border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.cabecalho-codigo .nome-linguagem {
+color: #8b949e;
+font-family: ui-monospace, Menlo, Consolas, monospace;
+font-size: 12px;
+text-transform: lowercase;
+}
+.btn-copiar-codigo {
+background: transparent;
+border: none;
+padding: 2px 4px;
+display: flex;
+align-items: center;
+gap: 5px;
+cursor: pointer;
+color: #8b949e;
+font-family: 'Times New Roman', Times, serif;
+font-size: 13px;
+}
+.btn-copiar-codigo:active { color: #c9d1d9; }
+.btn-copiar-codigo svg { width: 14px; height: 14px; }
+
+/* Toast de confirmacao (copiado, feedback enviado, etc) */
+#toast {
+position: fixed;
+left: 50%;
+bottom: 100px;
+transform: translateX(-50%) translateY(10px);
+background: var(--text);
+color: var(--bg);
+padding: 9px 18px;
+border-radius: 20px;
+font-family: 'Times New Roman', Times, serif;
+font-size: 14px;
+font-weight: bold;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.2s, transform 0.2s;
+z-index: 960;
+white-space: nowrap;
+}
+#toast.show {
+opacity: 1;
+transform: translateX(-50%) translateY(0);
+}
+
+
+/* Input — mesmo padrão do preview-input.html */
+#input-area {
+position: fixed;
+left: 0; right: 0; bottom: 0;
+padding: 10px 14px 14px;
+background: var(--bg);
+flex-shrink: 0;
+z-index: 5;
+}
+.pv-pill {
+display: flex;
+flex-direction: column;
+gap: 4px;
+background: var(--bg2);
+border: 1px solid var(--border);
+border-radius: 24px;
+padding: 12px 14px 8px;
+box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.pv-linha-botoes {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.pv-linha-botoes .pv-espaco { flex: 1; }
+.pv-botao-redondo {
+width: 36px; height: 36px;
+flex-shrink: 0;
+border: none;
+border-radius: 50%;
+background: var(--bg3);
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+padding: 0;
+}
+.pv-botao-redondo:active { opacity: 0.8; }
+.pv-botao-redondo svg { width: 20px; height: 20px; }
+#chat-input {
+width: 100%;
+border: none;
+background: transparent;
+font-family: 'Times New Roman', Times, serif;
+font-size: 15px;
+outline: none;
+color: var(--text);
+resize: none;
+overflow-y: auto;
+min-height: 26px;
+max-height: 120px;
+line-height: 1.4;
+padding: 2px 4px 8px;
+}
+#btn-enviar-chat { background: var(--r); }
+#btn-enviar-chat svg { stroke: #fff; }
+#btn-enviar-chat:disabled { background: var(--bg3); cursor: default; }
+#btn-enviar-chat:disabled svg { stroke: var(--muted); }
+
+/* Sidebar */
+#sidebar-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.5);
+z-index: 900;
+}
+#sidebar-overlay.show { display: block; }
+#sidebar {
+position: fixed;
+top: 0; left: 0; bottom: 0;
+width: 82%;
+max-width: 340px;
+background: var(--bg);
+z-index: 910;
+display: flex;
+flex-direction: column;
+transform: translateX(-100%);
+transition: transform 0.28s ease;
+box-shadow: 4px 0 20px rgba(0,0,0,0.25);
+}
+#sidebar.show { transform: translateX(0); }
+#sidebar-cabecalho {
+background: var(--r);
+color: #fff;
+font-weight: bold;
+font-size: 15px;
+letter-spacing: 1px;
+text-transform: uppercase;
+padding: 14px 16px;
+flex-shrink: 0;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+#sidebar-conteudo {
+flex: 1;
+overflow-y: auto;
+padding: 10px;
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+#sidebar-conteudo button {
+background: var(--bg2);
+border: 1px solid var(--border);
+border-radius: 8px;
+padding: 14px 16px;
+text-align: left;
+font-family: 'Times New Roman', Times, serif;
+font-size: 17px;
+font-weight: bold;
+color: var(--text);
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 14px;
+width: 100%;
+}
+#sidebar-conteudo button:active { background: var(--bg3); }
+.sidebar-icone {
+width: 24px; height: 24px;
+flex-shrink: 0;
+}
+.sidebar-icone svg { width: 100%; height: 100%; display: block; }
+.sidebar-separador {
+border: none;
+border-top: 1px solid var(--border);
+margin: 6px 4px;
+}
+#sidebar-rodape {
+flex-shrink: 0;
+padding: 12px 16px 16px;
+border-top: 1px solid var(--border);
+background: var(--bg3);
+}
+#sidebar-rodape .marca {
+font-family: 'Times New Roman', Times, serif;
+font-size: 13px;
+color: var(--muted);
+margin-bottom: 8px;
+text-align: center;
+}
+#sidebar-rodape a {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+background: var(--r);
+color: #fff;
+text-decoration: none;
+border-radius: 8px;
+padding: 12px 16px;
+font-family: 'Times New Roman', Times, serif;
+font-size: 15px;
+font-weight: bold;
+}
+#sidebar-rodape a:active { opacity: 0.85; }
+#sidebar-rodape a svg { width: 18px; height: 18px; }
+
+/* Modal — mesmo padrão visual do index.html */
+#modal-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.5);
+z-index: 950;
+align-items: center;
+justify-content: center;
+padding: 24px;
+}
+#modal-overlay.show { display: flex; }
+#modal-caixa {
+width: 100%;
+max-width: 340px;
+background: var(--bg);
+border-radius: 12px;
+overflow: hidden;
+box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+}
+#modal-cabecalho {
+background: var(--r);
+color: #fff;
+font-weight: bold;
+font-size: 15px;
+letter-spacing: 1px;
+text-transform: uppercase;
+padding: 14px 16px;
+}
+#modal-corpo {
+padding: 18px 16px;
+font-family: 'Times New Roman', Times, serif;
+font-size: 17px;
+font-weight: bold;
+line-height: 1.5;
+color: var(--text);
+white-space: pre-wrap;
+word-break: break-word;
+max-height: 50vh;
+overflow-y: auto;
+}
+#modal-rodape {
+padding: 12px 16px 16px;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+#modal-rodape button {
+background: var(--bg2);
+border: 1px solid var(--border);
+border-radius: 8px;
+padding: 12px 18px;
+text-align: left;
+font-family: 'Times New Roman', Times, serif;
+font-size: 16px;
+font-weight: bold;
+color: var(--text);
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 10px;
+align-self: stretch;
+justify-content: center;
+}
+#modal-rodape button:active { background: var(--bg3); }
+#modal-rodape button.primario {
+background: var(--r);
+border-color: var(--r);
+color: #fff;
+}
+#modal-rodape button.destrutivo { color: var(--r); }
+#modal-rodape .modal-icone {
+width: 18px; height: 18px;
+flex-shrink: 0;
+}
+#modal-rodape .modal-icone svg { width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+
+<div id="statusbar">
+<button id="btn-menu" onclick="abrirSidebar()" aria-label="Menu">
+<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+</button>
+<span class="titulo" id="titulo">{{BOT_NOME}}</span>
+</div>
+
+<div id="chat"></div>
+
+<div id="input-area">
+<div class="pv-pill">
+<textarea id="chat-input" placeholder="Escreva uma mensagem..." autocomplete="off" spellcheck="false" rows="1" enterkeyhint="enter"></textarea>
+<div class="pv-linha-botoes">
+<button class="pv-botao-redondo" onclick="anexarFicheiro()" aria-label="Anexar">
+<svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/></svg>
+</button>
+<button class="pv-botao-redondo" onclick="pedirLimparConversa()" aria-label="Limpar conversa">
+<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3m-8 0v13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+<span class="pv-espaco"></span>
+<button class="pv-botao-redondo" onclick="mensagemVoz()" aria-label="Mensagem de voz">
+<svg viewBox="0 0 24 24" fill="none"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" stroke="var(--muted)" stroke-width="2"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/></svg>
+</button>
+<button id="btn-enviar-chat" class="pv-botao-redondo" onclick="enviar()" aria-label="Enviar">
+<svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M6 11l6-6 6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+</div>
+</div>
+</div>
+
+<div id="sidebar-overlay" onclick="fecharSidebar()"></div>
+<div id="sidebar">
+<div id="sidebar-cabecalho">{{BOT_NOME}}</div>
+<div id="sidebar-conteudo">
+<button onclick="alternarTema()">
+<span class="sidebar-icone"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 9 9c0-.5-.03-1-.1-1.5a5.5 5.5 0 0 1-7.4-7.4C13 3.03 12.5 3 12 3z" stroke="#7A6A5E" stroke-width="2" stroke-linejoin="round"/></svg></span>
+Tema
+</button>
+</div>
+<div id="sidebar-rodape">
+<div class="marca">Gostou deste atendimento? Crie o seu bot no BotQL</div>
+<a href="https://botql.teudominio.com" target="_blank" rel="noopener">
+<svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M8 11l4 4 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+Baixar o app
+</a>
+</div>
+</div>
+
+<div id="modal-overlay">
+<div id="modal-caixa">
+<div id="modal-cabecalho">Erro</div>
+<div id="modal-corpo"></div>
+<div id="modal-rodape"></div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/highlight.min.js"></script>
+
+<script>
+// =====================================================================
+// chat.html — interface pública do bot.
+//
+// Mesmo estilo visual do index.html.
+// Renderiza Markdown + HTML (sanitizado por DOMPurify) + syntax
+// highlight nas respostas do bot.
+// =====================================================================
+
+const chatEl = document.getElementById('chat');
+const inputEl = document.getElementById('chat-input');
+const btnEnviar = document.getElementById('btn-enviar-chat');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+if (typeof marked !== 'undefined') {
+marked.setOptions({ breaks: true, gfm: true });
+}
+
+// DOMPurify: permite formatação rica, bloqueia scripts e tags de
+// input (input, textarea, select, button, form). Mantém <style> para
+// o bot poder injetar CSS no seu próprio container.
+const HTML_PERMITIDO = {
+ALLOWED_TAGS: [
+'div','span','p','br','hr','section','article','header','footer','main','aside',
+'h1','h2','h3','h4','h5','h6',
+'ul','ol','li','dl','dt','dd',
+'strong','em','b','i','u','s','del','ins','sub','sup','small','mark',
+'a','img','figure','figcaption','picture','source',
+'table','thead','tbody','tfoot','tr','th','td','caption','colgroup','col',
+'blockquote','pre','code','kbd','samp','var',
+'details','summary','style'
+],
+ALLOWED_ATTR: [
+'class','id','style','title','href','src','alt','width','height',
+'colspan','rowspan','target','rel','srcset','sizes','loading','role','aria-label'
+],
+FORBID_TAGS: [
+'script','iframe','object','embed','form','input','textarea','select',
+'option','button','meta','link','base','applet','frame','frameset'
+],
+FORBID_ATTR: [
+'onclick','ondblclick','onmousedown','onmouseup','onmouseover','onmousemove',
+'onmouseout','onmouseenter','onmouseleave','onload','onerror','onfocus','onblur',
+'onchange','onsubmit','oninput','onkeydown','onkeyup','onkeypress','onabort',
+'oncanplay','oncanplaythrough','ondurationchange','onemptied','onended',
+'onloadeddata','onloadedmetadata','onloadstart','onpause','onplay','onplaying',
+'onprogress','onratechange','onseeked','onseeking','onstalled','onsuspend',
+'ontimeupdate','onvolumechange','onwaiting','onerror'
+],
+ALLOW_DATA_ATTR: true,
+ALLOW_UNKNOWN_PROTOCOLS: false
+};
+
+// ID do visitante (só o ID vive no localStorage)
+const STORAGE_CLIENTE = 'botql_chat_cliente';
+let CLIENTE = localStorage.getItem(STORAGE_CLIENTE);
+if (!CLIENTE) {
+CLIENTE = 'v-' + Math.random().toString(36).slice(2, 10);
+localStorage.setItem(STORAGE_CLIENTE, CLIENTE);
+}
+
+// URL_SERVIDOR: quando este chat.html e' servido pelo proprio
+// ServidorBotQL (mesma origem), caminho relativo ('/mensagem') ja
+// chega ao sitio certo, entao URL_SERVIDOR fica vazio de proposito.
+// Quando o chat.html vive noutro dominio (ex: GitHub Pages, link
+// fixo e publico), precisa saber para onde apontar -- isso vem do
+// parametro ?servidor= na propria URL, preenchido pelo botao
+// "Partilhar Bot" com o endereco do tunel activo naquele momento.
+// Sem o parametro, mantem-se vazio e o fetch cai no caminho
+// relativo de sempre.
+const params = new URLSearchParams(window.location.search);
+let URL_SERVIDOR = params.get('servidor') || '';
+if (URL_SERVIDOR.endsWith('/')) URL_SERVIDOR = URL_SERVIDOR.slice(0, -1);
+
+// ---- Ícones SVG ----
+const SVG_CHECK = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SVG_X = '<svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#7A6A5E" stroke-width="2" stroke-linecap="round"/></svg>';
+const SVG_LIXEIRA = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3m-8 0v13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const SVG_COPIAR = '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2"/></svg>';
+const SVG_LIKE = '<svg viewBox="0 0 24 24" fill="none"><path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3zm0 0l4.5-8a2 2 0 0 1 3.6 1.2L14 9h5a2 2 0 0 1 2 2.4l-1.6 8A2 2 0 0 1 17.5 21H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SVG_DISLIKE = '<svg viewBox="0 0 24 24" fill="none"><path d="M17 14V3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3zm0 0l-4.5 8a2 2 0 0 1-3.6-1.2L10 15H5a2 2 0 0 1-2-2.4l1.6-8A2 2 0 0 1 6.5 3H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// ---- Modal ----
+function abrirModal(titulo, corpo, botoesHTML) {
+document.getElementById('modal-cabecalho').textContent = titulo;
+document.getElementById('modal-corpo').textContent = corpo;
+document.getElementById('modal-rodape').innerHTML = botoesHTML;
+document.getElementById('modal-overlay').classList.add('show');
+}
+
+function fecharModal() {
+document.getElementById('modal-overlay').classList.remove('show');
+}
+
+function modalAviso(titulo, corpo) {
+abrirModal(titulo, corpo,
+'<button class="primario" onclick="fecharModal()">' +
+'<span class="modal-icone">' + SVG_CHECK + '</span>OK</button>');
+}
+
+// ---- Chat ----
+let proximoIdMensagem = 0;
+
+// Usa rAF (duas vezes: uma para o layout do que acabou de entrar no
+// DOM, outra para garantir que imagens/blocos ja tiveram o reflow
+// aplicado) para o scroll nunca ficar curto e deixar a ultima mensagem
+// meio escondida atras da area do input.
+function rolarParaFim() {
+requestAnimationFrame(() => {
+requestAnimationFrame(() => {
+chatEl.scrollTop = chatEl.scrollHeight;
+});
+});
+}
+
+function adicionarMensagem(texto, classe, markdown) {
+const d = document.createElement('div');
+d.className = 'msg ' + classe;
+
+if (markdown && typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+d.classList.add('markdown');
+try {
+const htmlBruto = marked.parse(texto);
+const htmlLimpo = DOMPurify.sanitize(htmlBruto, HTML_PERMITIDO);
+d.innerHTML = htmlLimpo;
+if (typeof hljs !== 'undefined') {
+d.querySelectorAll('pre code').forEach((b) => {
+try { hljs.highlightElement(b); } catch (e) {}
+});
+}
+d.querySelectorAll('pre').forEach((blocoPre) => {
+adicionarBotaoCopiarCodigo(blocoPre);
+});
+d.querySelectorAll('img').forEach((img) => {
+img.addEventListener('load', rolarParaFim);
+});
+} catch (e) {
+d.textContent = texto;
+}
+} else {
+d.textContent = texto;
+}
+
+chatEl.appendChild(d);
+
+if (classe === 'sistema') {
+const idMsg = 'm' + (proximoIdMensagem++);
+d.dataset.msgId = idMsg;
+chatEl.appendChild(criarAcoesMensagem(idMsg, texto));
+}
+
+rolarParaFim();
+return d;
+}
+
+function criarAcoesMensagem(idMsg, textoOriginal) {
+const acoes = document.createElement('div');
+acoes.className = 'msg-acoes';
+acoes.dataset.msgId = idMsg;
+acoes.innerHTML =
+'<button class="msg-acao" data-acao="copiar" aria-label="Copiar">' + SVG_COPIAR + '</button>' +
+'<button class="msg-acao" data-acao="like" aria-label="Gostei">' + SVG_LIKE + '</button>' +
+'<button class="msg-acao" data-acao="dislike" aria-label="Não gostei">' + SVG_DISLIKE + '</button>';
+
+acoes.querySelector('[data-acao="copiar"]').addEventListener('click', () => {
+copiarTexto(textoOriginal);
+mostrarToast('Mensagem copiada');
+});
+acoes.querySelector('[data-acao="like"]').addEventListener('click', (ev) => {
+registarFeedback(idMsg, textoOriginal, 'like', ev.currentTarget, acoes);
+});
+acoes.querySelector('[data-acao="dislike"]').addEventListener('click', (ev) => {
+registarFeedback(idMsg, textoOriginal, 'dislike', ev.currentTarget, acoes);
+});
+
+return acoes;
+}
+
+let toastTimeoutId = null;
+function mostrarToast(texto) {
+const el = document.getElementById('toast');
+el.textContent = texto;
+el.classList.add('show');
+if (toastTimeoutId) clearTimeout(toastTimeoutId);
+toastTimeoutId = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function copiarTexto(texto) {
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(texto).catch(() => {});
+} else {
+const ta = document.createElement('textarea');
+ta.value = texto;
+ta.style.position = 'fixed';
+ta.style.opacity = '0';
+document.body.appendChild(ta);
+ta.select();
+try { document.execCommand('copy'); } catch (e) {}
+document.body.removeChild(ta);
+}
+}
+
+function adicionarBotaoCopiarCodigo(blocoPre) {
+const codeEl = blocoPre.querySelector('code');
+const classeLinguagem = codeEl ? [...codeEl.classList].find((c) => c.startsWith('language-')) : null;
+const nomeLinguagem = classeLinguagem ? classeLinguagem.replace('language-', '') : 'texto';
+
+const cabecalho = document.createElement('div');
+cabecalho.className = 'cabecalho-codigo';
+
+const spanLinguagem = document.createElement('span');
+spanLinguagem.className = 'nome-linguagem';
+spanLinguagem.textContent = nomeLinguagem;
+
+const btn = document.createElement('button');
+btn.className = 'btn-copiar-codigo';
+btn.innerHTML = SVG_COPIAR + '<span>Copiar</span>';
+btn.addEventListener('click', () => {
+const texto = codeEl ? codeEl.textContent : blocoPre.textContent;
+copiarTexto(texto);
+btn.innerHTML = SVG_CHECK + '<span>Copiado</span>';
+setTimeout(() => { btn.innerHTML = SVG_COPIAR + '<span>Copiar</span>'; }, 1500);
+});
+
+cabecalho.appendChild(spanLinguagem);
+cabecalho.appendChild(btn);
+blocoPre.insertBefore(cabecalho, blocoPre.firstChild);
+}
+
+// Um clique alterna o estado (repetir remove o voto). like e dislike
+// sao mutuamente exclusivos na mesma mensagem.
+async function registarFeedback(idMsg, textoOriginal, tipo, botaoClicado, acoesEl) {
+const jaAtivo = botaoClicado.classList.contains('ativo');
+const novoValor = jaAtivo ? null : tipo;
+
+acoesEl.querySelectorAll('.msg-acao[data-acao="like"], .msg-acao[data-acao="dislike"]')
+.forEach((b) => b.classList.remove('ativo'));
+if (novoValor) botaoClicado.classList.add('ativo');
+
+mostrarToast(novoValor === 'like' ? 'Obrigado pelo feedback' : (novoValor === 'dislike' ? 'Feedback registado' : 'Voto removido'));
+
+try {
+await fetch(URL_SERVIDOR + '/feedback', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+cliente: CLIENTE,
+mensagem: textoOriginal,
+valor: novoValor
+})
+});
+} catch (e) {}
+}
+
+function adicionarDigitando() {
+const d = document.createElement('div');
+d.className = 'msg digitando';
+d.id = 'digitando';
+d.innerHTML = '<span class="ponto"></span><span class="ponto"></span><span class="ponto"></span>';
+chatEl.appendChild(d);
+rolarParaFim();
+}
+
+function esconderDigitando() {
+const el = document.getElementById('digitando');
+if (el) el.remove();
+}
+
+function ajustarAltura() {
+inputEl.style.height = 'auto';
+inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+rolarParaFim();
+}
+
+async function enviar() {
+const texto = inputEl.value.trim();
+if (!texto) return;
+
+adicionarMensagem(texto, 'usuario', false);
+inputEl.value = '';
+ajustarAltura();
+btnEnviar.disabled = true;
+adicionarDigitando();
+
+try {
+const res = await fetch(URL_SERVIDOR + '/mensagem', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ cliente: CLIENTE, texto: texto })
+});
+
+esconderDigitando();
+
+if (!res.ok) {
+adicionarMensagem('[erro ' + res.status + ']', 'sistema', false);
+return;
+}
+
+const data = await res.json();
+if (data.resposta) {
+adicionarMensagem(data.resposta, 'sistema', true);
+}
+} catch (e) {
+esconderDigitando();
+const msgErro = URL_SERVIDOR
+? 'Não foi possível falar com o bot agora. Quem criou este bot pode estar offline no momento — tenta novamente daqui a pouco.'
+: '[erro de rede] ' + e.message;
+adicionarMensagem(msgErro, 'sistema', false);
+} finally {
+btnEnviar.disabled = false;
+inputEl.focus();
+}
+}
+
+// ---- Sidebar ----
+function abrirSidebar() {
+sidebar.classList.add('show');
+sidebarOverlay.classList.add('show');
+}
+function fecharSidebar() {
+sidebar.classList.remove('show');
+sidebarOverlay.classList.remove('show');
+}
+
+function alternarTema() {
+document.documentElement.classList.toggle('tema-escuro');
+localStorage.setItem('botql_chat_tema',
+document.documentElement.classList.contains('tema-escuro') ? 'escuro' : 'claro');
+}
+if (localStorage.getItem('botql_chat_tema') === 'escuro') {
+document.documentElement.classList.add('tema-escuro');
+}
+
+// ---- Ações ----
+function pedirLimparConversa() {
+abrirModal('Limpar conversa', 'Apagar todas as mensagens desta conversa?',
+'<button class="destrutivo" onclick="confirmarLimparConversa()">' +
+'<span class="modal-icone">' + SVG_LIXEIRA + '</span>Limpar</button>' +
+'<button onclick="fecharModal()">' +
+'<span class="modal-icone">' + SVG_X + '</span>Cancelar</button>');
+}
+function confirmarLimparConversa() {
+chatEl.innerHTML = '';
+fecharModal();
+}
+function anexarFicheiro() { modalAviso('Anexar ficheiro', 'Ainda não disponível.'); }
+function mensagemVoz() { modalAviso('Mensagem de voz', 'Ainda não disponível.'); }
+
+// ---- Eventos ----
+btnEnviar.addEventListener('click', enviar);
+inputEl.addEventListener('input', ajustarAltura);
+inputEl.focus();
+</script>
+</body>
+</html>
