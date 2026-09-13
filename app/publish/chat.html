@@ -685,6 +685,30 @@ const params = new URLSearchParams(window.location.search);
 let URL_SERVIDOR = params.get('servidor') || '';
 if (URL_SERVIDOR.endsWith('/')) URL_SERVIDOR = URL_SERVIDOR.slice(0, -1);
 
+// Quando o ServidorBotQL serve este ficheiro localmente, ele
+// substitui {{BOT_NOME}} pelo nome real antes de enviar a resposta.
+// Servido de fora (GitHub Pages), essa substituicao nunca acontece --
+// o placeholder chega literal ao HTML. Nesse caso, primeiro troca por
+// um texto neutro (evita o utilizador ver "{{BOT_NOME}}" no ecra
+// mesmo que so por um instante) e so depois busca o nome real via
+// /estado (mesmo endpoint que o Analytics/menu ja usam), assim que o
+// endereco do servidor for conhecido.
+if (URL_SERVIDOR) {
+document.querySelectorAll('.titulo, #sidebar-cabecalho').forEach((el) => {
+if (el.textContent.includes('{{BOT_NOME}}')) el.textContent = 'Bot';
+});
+fetch(URL_SERVIDOR + '/estado')
+.then((r) => r.json())
+.then((estado) => {
+if (!estado.bot) return;
+document.title = estado.bot;
+document.querySelectorAll('.titulo, #sidebar-cabecalho').forEach((el) => {
+el.textContent = estado.bot;
+});
+})
+.catch(() => { /* mantem "Bot" se /estado falhar */ });
+}
+
 // ---- Ícones SVG ----
 const SVG_CHECK = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const SVG_X = '<svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#7A6A5E" stroke-width="2" stroke-linecap="round"/></svg>';
