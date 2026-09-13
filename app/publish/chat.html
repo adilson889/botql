@@ -18,7 +18,6 @@
 --bot-tamanho: 17px;
 }
 
-/* Tema escuro — troca só as variáveis, o resto herda */
 .tema-escuro {
 --bg: #1A1A1A;
 --bg2: #2A2A2A;
@@ -103,7 +102,6 @@ font-size: 14px;
 font-weight: normal;
 }
 
-/* Conteúdo renderizado (markdown + HTML sanitizado) */
 .msg.sistema.markdown { white-space: normal; }
 .msg.sistema.markdown p { margin: 0 0 8px; font-weight: normal; }
 .msg.sistema.markdown p:last-child { margin-bottom: 0; }
@@ -163,7 +161,6 @@ height: auto;
 border-radius: 8px;
 }
 
-/* Tema de cores do highlight.js (GitHub Dark) */
 .msg.sistema.markdown pre code.hljs { display: block; overflow-x: auto; }
 .msg.sistema.markdown .hljs { color: #c9d1d9; background: #0d1117; }
 .msg.sistema.markdown .hljs-doctag,
@@ -204,9 +201,6 @@ border-radius: 8px;
 .msg.sistema.markdown .hljs-addition { color: #aff5b4; background-color: #033a16; }
 .msg.sistema.markdown .hljs-deletion { color: #ffdcd7; background-color: #67060c; }
 
-/* Produto/categoria do catálogo (SHOW CATALOG/CATEGORY): o bot envia
-só os data-*, quem trata o clique e' este chat.html -- o bot nunca
-executa nada, so' recebe depois o texto final que o visitante enviar. */
 .msg.sistema.markdown [data-botql-produto],
 .msg.sistema.markdown [data-botql-categoria] {
 cursor: pointer;
@@ -247,7 +241,6 @@ animation: bounce 1.2s infinite ease-in-out;
 30% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* Acoes por baixo de cada resposta do bot: copiar, gostei, nao gostei */
 .msg-acoes {
 display: flex;
 align-items: center;
@@ -272,7 +265,6 @@ color: var(--muted);
 .msg-acao.ativo { color: var(--r); }
 .msg-acao.ativo svg path { fill: var(--r); }
 
-/* Cabecalho do bloco de codigo: linguagem + copiar, numa faixa propria */
 .msg.sistema.markdown pre { position: relative; }
 .cabecalho-codigo {
 display: flex;
@@ -302,7 +294,6 @@ font-size: 13px;
 .btn-copiar-codigo:active { color: #c9d1d9; }
 .btn-copiar-codigo svg { width: 14px; height: 14px; }
 
-/* Toast de confirmacao (copiado, feedback enviado, etc) */
 #toast {
 position: fixed;
 left: 50%;
@@ -326,8 +317,6 @@ opacity: 1;
 transform: translateX(-50%) translateY(0);
 }
 
-
-/* Input — mesmo padrão do preview-input.html */
 #input-area {
 position: fixed;
 left: 0; right: 0; bottom: 0;
@@ -386,7 +375,6 @@ padding: 2px 4px 8px;
 #btn-enviar-chat:disabled { background: var(--bg3); cursor: default; }
 #btn-enviar-chat:disabled svg { stroke: var(--muted); }
 
-/* Sidebar */
 #sidebar-overlay {
 display: none;
 position: fixed;
@@ -487,7 +475,6 @@ font-weight: bold;
 #sidebar-rodape a:active { opacity: 0.85; }
 #sidebar-rodape a svg { width: 18px; height: 18px; }
 
-/* Modal — mesmo padrão visual do index.html */
 #modal-overlay {
 display: none;
 position: fixed;
@@ -563,9 +550,40 @@ width: 18px; height: 18px;
 flex-shrink: 0;
 }
 #modal-rodape .modal-icone svg { width: 100%; height: 100%; display: block; }
+
+#tela-carregando {
+position: fixed;
+inset: 0;
+background: var(--bg);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 14px;
+z-index: 999;
+font-family: 'Times New Roman', Times, serif;
+color: var(--muted);
+font-size: 14px;
+font-weight: bold;
+text-align: center;
+padding: 30px;
+}
+#tela-carregando .spinner-grande {
+width: 34px; height: 34px;
+border: 3px solid var(--border);
+border-top-color: var(--r);
+border-radius: 50%;
+animation: girar 0.8s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
+
+<div id="tela-carregando">
+<div class="spinner-grande"></div>
+<div id="texto-carregando">A preparar o bot...</div>
+</div>
 
 <div id="statusbar">
 <button id="btn-menu" onclick="abrirSidebar()" aria-label="Menu">
@@ -633,9 +651,18 @@ Baixar o app
 // =====================================================================
 // chat.html — interface pública do bot.
 //
-// Mesmo estilo visual do index.html.
-// Renderiza Markdown + HTML (sanitizado por DOMPurify) + syntax
-// highlight nas respostas do bot.
+// Dois modos, decididos pelos parâmetros da própria URL:
+//
+//   ?bot=<base64url(deflate(json))>
+//     Modo CLIENT-SIDE (novo, sem servidor nem túnel). O JSON contém
+//     { nome, sql, arquivos }. Carrega botql.browser.js do CDN e corre
+//     o interpretador aqui mesmo, no browser do visitante.
+//
+//   ?servidor=<url>
+//     Modo TÚNEL (antigo, mantido como alternativa). Fala por fetch
+//     com o servidor local do dono do bot, via cloudflared.
+//
+// Sem nenhum dos dois parâmetros, o chat não tem com quem falar.
 // =====================================================================
 
 const chatEl = document.getElementById('chat');
@@ -643,14 +670,13 @@ const inputEl = document.getElementById('chat-input');
 const btnEnviar = document.getElementById('btn-enviar-chat');
 const sidebar = document.getElementById('sidebar');
 const sidebarOverlay = document.getElementById('sidebar-overlay');
+const telaCarregando = document.getElementById('tela-carregando');
+const textoCarregando = document.getElementById('texto-carregando');
 
 if (typeof marked !== 'undefined') {
 marked.setOptions({ breaks: true, gfm: true });
 }
 
-// DOMPurify: permite formatação rica, bloqueia scripts e tags de
-// input (input, textarea, select, button, form). Mantém <style> para
-// o bot poder injetar CSS no seu próprio container.
 const HTML_PERMITIDO = {
 ALLOWED_TAGS: [
 'div','span','p','br','hr','section','article','header','footer','main','aside',
@@ -683,7 +709,6 @@ ALLOW_DATA_ATTR: true,
 ALLOW_UNKNOWN_PROTOCOLS: false
 };
 
-// ID do visitante (só o ID vive no localStorage)
 const STORAGE_CLIENTE = 'botql_chat_cliente';
 let CLIENTE = localStorage.getItem(STORAGE_CLIENTE);
 if (!CLIENTE) {
@@ -691,41 +716,142 @@ CLIENTE = 'v-' + Math.random().toString(36).slice(2, 10);
 localStorage.setItem(STORAGE_CLIENTE, CLIENTE);
 }
 
-// URL_SERVIDOR: quando este chat.html e' servido pelo proprio
-// ServidorBotQL (mesma origem), caminho relativo ('/mensagem') ja
-// chega ao sitio certo, entao URL_SERVIDOR fica vazio de proposito.
-// Quando o chat.html vive noutro dominio (ex: GitHub Pages, link
-// fixo e publico), precisa saber para onde apontar -- isso vem do
-// parametro ?servidor= na propria URL, preenchido pelo botao
-// "Partilhar Bot" com o endereco do tunel activo naquele momento.
-// Sem o parametro, mantem-se vazio e o fetch cai no caminho
-// relativo de sempre.
 const params = new URLSearchParams(window.location.search);
 let URL_SERVIDOR = params.get('servidor') || '';
 if (URL_SERVIDOR.endsWith('/')) URL_SERVIDOR = URL_SERVIDOR.slice(0, -1);
+const DADOS_BOT_CODIFICADOS = params.get('bot') || '';
 
-// Quando o ServidorBotQL serve este ficheiro localmente, ele
-// substitui {{BOT_NOME}} pelo nome real antes de enviar a resposta.
-// Servido de fora (GitHub Pages), essa substituicao nunca acontece --
-// o placeholder chega literal ao HTML. Nesse caso, primeiro troca por
-// um texto neutro (evita o utilizador ver "{{BOT_NOME}}" no ecra
-// mesmo que so por um instante) e so depois busca o nome real via
-// /estado (mesmo endpoint que o Analytics/menu ja usam), assim que o
-// endereco do servidor for conhecido.
-if (URL_SERVIDOR) {
+// MODO_CLIENTE = true quando o bot corre aqui mesmo, sem rede.
+let MODO_CLIENTE = !!DADOS_BOT_CODIFICADOS;
+let botInstancia = null;
+
+// ---- Descompressão do link (?bot=) ----
+// base64url -> bytes -> DecompressionStream('deflate-raw') -> JSON.
+// DecompressionStream é nativo (Chrome/WebView 80+, iOS Safari 16.4+);
+// no raríssimo caso de faltar, mostra um erro claro em vez de travar.
+function base64UrlParaBytes(b64url) {
+let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+while (b64.length % 4) b64 += '=';
+const binario = atob(b64);
+const bytes = new Uint8Array(binario.length);
+for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+return bytes;
+}
+
+async function descomprimir(bytes) {
+const ds = new DecompressionStream('deflate-raw');
+const stream = new Blob([bytes]).stream().pipeThrough(ds);
+const buffer = await new Response(stream).arrayBuffer();
+return new TextDecoder().decode(buffer);
+}
+
+async function carregarScript(url) {
+return new Promise((resolve, reject) => {
+const s = document.createElement('script');
+s.src = url;
+s.onload = () => resolve(url);
+s.onerror = () => reject(new Error('falha ao carregar ' + url));
+document.head.appendChild(s);
+});
+}
+
+async function carregarMotorBotQL() {
+const URL_CDN_1 = 'https://cdn.jsdelivr.net/npm/botql@1.3.5/botql.browser.js';
+const URL_CDN_2 = 'https://unpkg.com/botql@1.3.5/botql.browser.js';
+try {
+await carregarScript(URL_CDN_1);
+} catch (e) {
+await carregarScript(URL_CDN_2);
+}
+}
+
+function definirNomeBot(nome) {
+document.title = nome;
+document.querySelectorAll('.titulo, #sidebar-cabecalho').forEach((el) => {
+el.textContent = nome;
+});
+}
+
+function esconderTelaCarregando() {
+telaCarregando.style.display = 'none';
+}
+
+async function iniciarModoCliente() {
+try {
+if (typeof DecompressionStream === 'undefined') {
+throw new Error('este navegador não suporta descompressão nativa — atualiza o navegador e tenta novamente');
+}
+
+textoCarregando.textContent = 'A carregar o motor do bot...';
+const bytes = base64UrlParaBytes(DADOS_BOT_CODIFICADOS);
+const jsonTexto = await descomprimir(bytes);
+const dados = JSON.parse(jsonTexto);
+
+await carregarMotorBotQL();
+
+const nomeBot = dados.nome || 'Bot';
+definirNomeBot(nomeBot);
+if (document.querySelectorAll('.titulo, #sidebar-cabecalho').length) {
+// já aplicado acima
+}
+
+textoCarregando.textContent = 'A iniciar o bot...';
+const fileSystem = new BotQL.MemoryFileSystem(dados.arquivos || {});
+const bot = BotQL.BotQLInterpreter.fromSource(dados.sql, {
+fileSystem: fileSystem,
+basePath: ''
+});
+
+bot.onReply = ({ text, html }) => {
+esconderDigitando();
+if (text || html) adicionarMensagem(text || '', 'sistema', true, html);
+};
+bot.onForward = ({ target }) => {
+esconderDigitando();
+adicionarMensagem('[encaminhado para ' + target + ']', 'sistema', false);
+};
+bot.onSend = ({ target }) => {
+esconderDigitando();
+adicionarMensagem('[enviado para ' + target + ']', 'sistema', false);
+};
+bot.onThinking = null;
+
+await bot.start();
+botInstancia = bot;
+
+esconderTelaCarregando();
+inputEl.focus();
+} catch (e) {
+esconderTelaCarregando();
+adicionarMensagem(
+'Não foi possível iniciar este bot: ' + (e.message || String(e)),
+'sistema', false
+);
+}
+}
+
+// ---- Modo túnel (antigo) ----
+if (!MODO_CLIENTE && URL_SERVIDOR) {
 document.querySelectorAll('.titulo, #sidebar-cabecalho').forEach((el) => {
 if (el.textContent.includes('{{BOT_NOME}}')) el.textContent = 'Bot';
 });
 fetch(URL_SERVIDOR + '/estado')
 .then((r) => r.json())
-.then((estado) => {
-if (!estado.bot) return;
-document.title = estado.bot;
-document.querySelectorAll('.titulo, #sidebar-cabecalho').forEach((el) => {
-el.textContent = estado.bot;
-});
-})
-.catch(() => { /* mantem "Bot" se /estado falhar */ });
+.then((estado) => { if (estado.bot) definirNomeBot(estado.bot); })
+.catch(() => {});
+}
+
+if (MODO_CLIENTE) {
+iniciarModoCliente();
+} else if (URL_SERVIDOR) {
+esconderTelaCarregando();
+} else {
+esconderTelaCarregando();
+adicionarMensagemInicialSemLink();
+}
+
+function adicionarMensagemInicialSemLink() {
+adicionarMensagem('Este link não tem nenhum bot associado.', 'sistema', false);
 }
 
 // ---- Ícones SVG ----
@@ -743,11 +869,9 @@ document.getElementById('modal-corpo').textContent = corpo;
 document.getElementById('modal-rodape').innerHTML = botoesHTML;
 document.getElementById('modal-overlay').classList.add('show');
 }
-
 function fecharModal() {
 document.getElementById('modal-overlay').classList.remove('show');
 }
-
 function modalAviso(titulo, corpo) {
 abrirModal(titulo, corpo,
 '<button class="primario" onclick="fecharModal()">' +
@@ -756,15 +880,8 @@ abrirModal(titulo, corpo,
 
 // ---- Chat ----
 let proximoIdMensagem = 0;
-// Nomes dos produtos ja tocados (SHOW CATALOG) -- toque so alterna
-// selecao e prepara o texto do input; enviar fica por conta do
-// visitante, permitindo escolher varios antes de confirmar.
 const produtosSelecionados = new Set();
 
-// Usa rAF (duas vezes: uma para o layout do que acabou de entrar no
-// DOM, outra para garantir que imagens/blocos ja tiveram o reflow
-// aplicado) para o scroll nunca ficar curto e deixar a ultima mensagem
-// meio escondida atras da area do input.
 function rolarParaFim() {
 requestAnimationFrame(() => {
 requestAnimationFrame(() => {
@@ -773,10 +890,6 @@ chatEl.scrollTop = chatEl.scrollHeight;
 });
 }
 
-// markdown=true renderiza texto como Markdown (resposta "de verdade"
-// do bot). html, quando vem preenchido (SHOW CATALOG/CATEGORY), tem
-// prioridade -- e' HTML ja pronto do botql.js, nao texto a interpretar
-// como Markdown (marked bagunçaria as tags/atributos data-botql-*).
 function adicionarMensagem(texto, classe, markdown, html) {
 const d = document.createElement('div');
 d.className = 'msg ' + classe;
@@ -909,8 +1022,9 @@ cabecalho.appendChild(btn);
 blocoPre.insertBefore(cabecalho, blocoPre.firstChild);
 }
 
-// Um clique alterna o estado (repetir remove o voto). like e dislike
-// sao mutuamente exclusivos na mesma mensagem.
+// Feedback: em modo cliente não há para onde enviar (não há servidor
+// nem dono online) — fica só local, um toast de agradecimento, sem
+// tentativa de rede que ia falhar sempre.
 async function registarFeedback(idMsg, textoOriginal, tipo, botaoClicado, acoesEl) {
 const jaAtivo = botaoClicado.classList.contains('ativo');
 const novoValor = jaAtivo ? null : tipo;
@@ -920,6 +1034,8 @@ acoesEl.querySelectorAll('.msg-acao[data-acao="like"], .msg-acao[data-acao="disl
 if (novoValor) botaoClicado.classList.add('ativo');
 
 mostrarToast(novoValor === 'like' ? 'Obrigado pelo feedback' : (novoValor === 'dislike' ? 'Feedback registado' : 'Voto removido'));
+
+if (MODO_CLIENTE) return;
 
 try {
 await fetch(URL_SERVIDOR + '/feedback', {
@@ -964,6 +1080,24 @@ ajustarAltura();
 btnEnviar.disabled = true;
 adicionarDigitando();
 
+if (MODO_CLIENTE) {
+try {
+if (!botInstancia) throw new Error('bot ainda não está pronto');
+await botInstancia.receiveMessage(CLIENTE, texto);
+// bot.onReply já trata de esconder "a digitar" e mostrar a
+// resposta -- se não disparar nada (bot sem resposta para o
+// caso), ainda assim garante que "a digitar" não fica preso.
+esconderDigitando();
+} catch (e) {
+esconderDigitando();
+adicionarMensagem('[erro] ' + (e.message || String(e)), 'sistema', false);
+} finally {
+btnEnviar.disabled = false;
+inputEl.focus();
+}
+return;
+}
+
 try {
 const res = await fetch(URL_SERVIDOR + '/mensagem', {
 method: 'POST',
@@ -994,11 +1128,6 @@ inputEl.focus();
 }
 }
 
-// ---- Catalogo (SHOW CATALOG/CATEGORY) ----
-// Produto: alterna selecao visual e escreve "quero comprar: A, B" no
-// input, sem enviar -- da para escolher varios antes de confirmar.
-// Categoria: preenche o input com o nome e envia logo, e' navegacao
-// (reaproveita o CONTAINS que o bot ja tem, nao um mecanismo novo).
 chatEl.addEventListener('click', (e) => {
 const produtoEl = e.target.closest('[data-botql-produto]');
 if (produtoEl) {
@@ -1023,7 +1152,6 @@ enviar();
 }
 });
 
-// ---- Sidebar ----
 function abrirSidebar() {
 sidebar.classList.add('show');
 sidebarOverlay.classList.add('show');
@@ -1042,7 +1170,6 @@ if (localStorage.getItem('botql_chat_tema') === 'escuro') {
 document.documentElement.classList.add('tema-escuro');
 }
 
-// ---- Ações ----
 function pedirLimparConversa() {
 abrirModal('Limpar conversa', 'Apagar todas as mensagens desta conversa?',
 '<button class="destrutivo" onclick="confirmarLimparConversa()">' +
@@ -1058,10 +1185,8 @@ fecharModal();
 function anexarFicheiro() { modalAviso('Anexar ficheiro', 'Ainda não disponível.'); }
 function mensagemVoz() { modalAviso('Mensagem de voz', 'Ainda não disponível.'); }
 
-// ---- Eventos ----
 btnEnviar.addEventListener('click', enviar);
 inputEl.addEventListener('input', ajustarAltura);
-inputEl.focus();
 </script>
 </body>
 </html>
