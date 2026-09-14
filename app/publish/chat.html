@@ -659,9 +659,11 @@ Baixar o app
 //     pausado } em GET /api/botql/:id (Vercel + repo privado no
 //     GitHub). Link curto e ESTÁVEL: editar/pausar o bot depois de
 //     partilhado atualiza automaticamente quem já tem o link, sem
-//     precisar repartilhar nada. Corre o interpretador aqui mesmo, no
-//     browser do visitante — sem depender do telemóvel do dono estar
-//     ligado.
+//     precisar repartilhar nada -- inclui quem já tem esta pagina
+//     aberta numa conversa em curso, via verificacao periodica
+//     (verificarAtualizacaoBot), nao so no carregamento inicial.
+//     Corre o interpretador aqui mesmo, no browser do visitante — sem
+//     depender do telemóvel do dono estar ligado.
 //
 //   ?bot=<base64url(deflate(json))>
 //     Modo CLIENT-SIDE antigo. O bot inteiro (nome+sql+arquivos) vai
@@ -669,11 +671,14 @@ Baixar o app
 //     (editar o bot depois não afeta links já distribuídos com este
 //     parâmetro). Mantido só por compatibilidade com links já
 //     partilhados antes da API existir; não é mais o caminho usado
-//     para gerar links novos.
+//     para gerar links novos. Sem servidor por tras, nao ha nada para
+//     verificar periodicamente aqui.
 //
 //   ?servidor=<url>
 //     Modo TÚNEL, mais antigo ainda. Fala por fetch com o servidor
-//     local do dono do bot. Mantido como último recurso.
+//     local do dono do bot -- cada mensagem ja vai sempre ter cara
+//     atual do bot nesse servidor, sem problema de desatualizacao.
+//     Mantido como último recurso.
 //
 // Sem nenhum dos três, o chat não tem com quem falar.
 // =====================================================================
@@ -746,6 +751,59 @@ const ID_BOT = params.get('id') || '';
 let MODO_CLIENTE = !!ID_BOT || !!DADOS_BOT_CODIFICADOS;
 let botInstancia = null;
 
+// ---- Verificacao periodica (?id= apenas) ----
+// O fetch inicial (iniciarModoId) so acontecia uma vez, ao carregar a
+// pagina -- quem ja tinha o chat aberto nunca via o dono pausar ou
+// editar o bot sem dar refresh manual. Isto guarda o ultimo estado
+// conhecido e volta a perguntar a API de tempos em tempos, para
+// reagir sozinho a pausa/retomada e a alteracoes no codigo do bot,
+// sem exigir que o visitante recarregue a pagina.
+const INTERVALO_VERIFICACAO_MS = 45000;
+let botPausado = false;
+let assinaturaBotAtual = null;
+let intervaloVerificacaoId = null;
+
+function assinaturaDados(dados) {
+return JSON.stringify({ sql: dados.sql, arquivos: dados.arquivos });
+}
+
+function iniciarVerificacaoPeriodica() {
+if (intervaloVerificacaoId) return;
+intervaloVerificacaoId = setInterval(verificarAtualizacaoBot, INTERVALO_VERIFICACAO_MS);
+}
+
+async function verificarAtualizacaoBot() {
+try {
+const resp = await fetch(URL_API_BOTQL + '/api/botql/' + encodeURIComponent(ID_BOT));
+if (!resp.ok) return;
+const dados = await resp.json();
+if (!dados.sucesso) return;
+
+definirNomeBot(dados.nome || 'Bot');
+
+if (dados.pausado && !botPausado) {
+botPausado = true;
+botInstancia = null;
+adicionarMensagem('Este bot foi pausado por quem o criou.', 'sistema', false);
+return;
+}
+
+if (!dados.pausado && botPausado) {
+botPausado = false;
+await correrBotComDados(dados);
+adicionarMensagem('O bot foi reativado.', 'sistema', false);
+return;
+}
+
+if (!dados.pausado && assinaturaDados(dados) !== assinaturaBotAtual) {
+await correrBotComDados(dados);
+}
+} catch (e) {
+// Falha de rede pontual na verificacao periodica nao deve
+// interromper nada -- so tenta de novo no proximo intervalo.
+}
+}
+
 // ---- Descompressão do link (?bot=) ----
 // base64url -> bytes -> DecompressionStream('deflate-raw') -> JSON.
 // DecompressionStream é nativo (Chrome/WebView 80+, iOS Safari 16.4+);
@@ -777,8 +835,8 @@ document.head.appendChild(s);
 }
 
 async function carregarMotorBotQL() {
-const URL_CDN_1 = 'https://cdn.jsdelivr.net/npm/botql@1.3.5/botql.browser.js';
-const URL_CDN_2 = 'https://unpkg.com/botql@1.3.5/botql.browser.js';
+const URL_CDN_1 = 'https://cdn.jsdelivr.net/npm/botql/botql.browser.js';
+const URL_CDN_2 = 'https://unpkg.com/botql/botql.browser.js';
 try {
 await carregarScript(URL_CDN_1);
 } catch (e) {
@@ -799,13 +857,18 @@ telaCarregando.style.display = 'none';
 
 // Roda o interpretador com { nome, sql, arquivos } já resolvidos — o
 // mesmo passo final tanto para ?id= (depois do fetch) quanto para
-// ?bot= (depois de descomprimir). Mantém a lógica de arrancar o bot
-// escrita só uma vez.
+// ?bot= (depois de descomprimir), e tambem reusado pela verificacao
+// periodica para reconstruir o interpretador quando o codigo do bot
+// muda a meio de uma conversa. Guarda a assinatura destes dados assim
+// que o bot arranca, para a verificacao periodica saber se algo
+// mudou desde a ultima vez.
 async function correrBotComDados(dados) {
 await carregarMotorBotQL();
 
 const nomeBot = dados.nome || 'Bot';
 definirNomeBot(nomeBot);
+assinaturaBotAtual = assinaturaDados(dados);
+botPausado = false;
 
 textoCarregando.textContent = 'A iniciar o bot...';
 const fileSystem = new BotQL.MemoryFileSystem(dados.arquivos || {});
@@ -838,7 +901,9 @@ inputEl.focus();
 // ---- Modo API (?id=) ----
 // Busca o bot atual em GET /api/botql/:id a cada abertura -- se o
 // dono pausou ou editou depois de partilhar o link, esta chamada já
-// reflete isso, sem o visitante precisar de um link novo.
+// reflete isso, sem o visitante precisar de um link novo. Depois do
+// arranque inicial, iniciarVerificacaoPeriodica mantem isto a
+// acontecer sozinho enquanto a pagina fica aberta.
 async function iniciarModoId() {
 try {
 textoCarregando.textContent = 'A carregar o bot...';
@@ -859,14 +924,18 @@ throw new Error(dados.erro || 'resposta inesperada da API');
 if (dados.pausado) {
 esconderTelaCarregando();
 definirNomeBot(dados.nome || 'Bot');
+botPausado = true;
+assinaturaBotAtual = assinaturaDados(dados);
 adicionarMensagem(
 'Este bot está pausado no momento. Quem o criou pode reativá-lo mais tarde.',
 'sistema', false
 );
+iniciarVerificacaoPeriodica();
 return;
 }
 
 await correrBotComDados(dados);
+iniciarVerificacaoPeriodica();
 } catch (e) {
 esconderTelaCarregando();
 adicionarMensagem(
@@ -1151,6 +1220,13 @@ btnEnviar.disabled = true;
 adicionarDigitando();
 
 if (MODO_CLIENTE) {
+if (botPausado) {
+esconderDigitando();
+adicionarMensagem('Este bot está pausado no momento.', 'sistema', false);
+btnEnviar.disabled = false;
+inputEl.focus();
+return;
+}
 try {
 if (!botInstancia) throw new Error('bot ainda não está pronto');
 await botInstancia.receiveMessage(CLIENTE, texto);
@@ -1252,11 +1328,4 @@ chatEl.innerHTML = '';
 produtosSelecionados.clear();
 fecharModal();
 }
-function anexarFicheiro() { modalAviso('Anexar ficheiro', 'Ainda não disponível.'); }
-function mensagemVoz() { modalAviso('Mensagem de voz', 'Ainda não disponível.'); }
-
-btnEnviar.addEventListener('click', enviar);
-inputEl.addEventListener('input', ajustarAltura);
-</script>
-</body>
-</html>
+function anexarFicheiro() { modalAviso('Anexar fiche
