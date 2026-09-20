@@ -475,6 +475,12 @@ font-weight: bold;
 #sidebar-rodape a:active { opacity: 0.85; }
 #sidebar-rodape a svg { width: 18px; height: 18px; }
 
+.sobre-rotulo { font-size: 12px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); padding: 4px 6px 6px; }
+.sobre-linha { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 6px; font-size: 15px; font-weight: normal; color: var(--text); }
+.sobre-linha b { font-weight: bold; }
+#sidebar-rodape .marca-titulo { font-size: 16px; font-weight: bold; color: var(--text); text-align: center; margin-bottom: 4px; }
+#sidebar-rodape .marca-texto { font-size: 13px; font-weight: normal; color: var(--muted); text-align: center; line-height: 1.4; margin-bottom: 10px; }
+
 #modal-overlay {
 display: none;
 position: fixed;
@@ -623,13 +629,20 @@ animation: girar 0.8s linear infinite;
 <span class="sidebar-icone"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 9 9c0-.5-.03-1-.1-1.5a5.5 5.5 0 0 1-7.4-7.4C13 3.03 12.5 3 12 3z" stroke="#7A6A5E" stroke-width="2" stroke-linejoin="round"/></svg></span>
 Tema
 </button>
+<button onclick="fecharSidebar();pedirLimparConversa()">
+<span class="sidebar-icone"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3m-8 0v13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" stroke="#7A6A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+Limpar conversa
+</button>
+<div id="sidebar-sobre" style="display:none">
+<hr class="sidebar-separador">
+<div class="sobre-rotulo">Sobre este bot</div>
+<div class="sobre-linha"><span>Atualizado em</span><b id="sobre-data">-</b></div>
 </div>
-<div id="sidebar-rodape">
-<div class="marca">Gostou deste atendimento? Crie o seu bot no BotQL</div>
-<a href="https://botql.teudominio.com" target="_blank" rel="noopener">
-<svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M8 11l4 4 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-Baixar o app
-</a>
+</div>
+<div id="sidebar-rodape" style="display:none">
+<div class="marca-titulo">Criado com BotQL</div>
+<div class="marca-texto">Crie o seu próprio bot de atendimento, sem programar.</div>
+<a href="URL_DO_EDITOR_AQUI" target="_blank" rel="noopener">Criar o meu bot</a>
 </div>
 </div>
 
@@ -744,6 +757,83 @@ if (URL_SERVIDOR.endsWith('/')) URL_SERVIDOR = URL_SERVIDOR.slice(0, -1);
 const DADOS_BOT_CODIFICADOS = params.get('bot') || '';
 const ID_BOT = params.get('id') || '';
 
+// ---- Contadores de atividade (so numeros, nunca o texto) ----
+// Acumula no navegador e envia um resumo a cada 30 s. Se o envio
+// falhar, os numeros ficam guardados e vao no proximo lote.
+const INTERVALO_STATS_MS = 30000;
+const stats = { recebidas: 0, enviadas: 0, likes: 0, dislikes: 0, visitantes: 0 };
+let statsIntervaloId = null;
+
+function contar(campo, n) { stats[campo] += (n || 1); }
+
+// Visita unica: conta 1 so vez por navegador para cada bot. A marca
+// "ja abri este bot" fica no navegador; o servidor recebe so o numero 1.
+const STORAGE_BOTS_VISTOS = 'botql_chat_bots_vistos';
+function contarVisitaUnica() {
+let vistos = [];
+try { vistos = JSON.parse(localStorage.getItem(STORAGE_BOTS_VISTOS) || '[]'); } catch (e) { vistos = []; }
+if (vistos.includes(ID_BOT)) return false;
+vistos.push(ID_BOT);
+try { localStorage.setItem(STORAGE_BOTS_VISTOS, JSON.stringify(vistos.slice(-200))); } catch (e) {}
+contar('visitantes');
+return true;
+}
+
+function statsPendentes() {
+return stats.recebidas || stats.enviadas || stats.likes || stats.dislikes || stats.visitantes;
+}
+
+async function enviarStats(aFechar) {
+if (!ID_BOT || !statsPendentes()) return;
+const lote = Object.assign({}, stats);
+Object.keys(stats).forEach((k) => { stats[k] = 0; });
+const url = URL_API_BOTQL + '/api/botql/' + encodeURIComponent(ID_BOT) + '/eventos';
+try {
+if (aFechar && navigator.sendBeacon) {
+const ok = navigator.sendBeacon(url, new Blob([JSON.stringify(lote)], { type: 'application/json' }));
+if (!ok) throw new Error('beacon recusado');
+return;
+}
+const resp = await fetch(url, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(lote),
+keepalive: !!aFechar
+});
+// 429 = enviou depressa demais; os numeros voltam para o proximo lote.
+if (!resp.ok) throw new Error('HTTP ' + resp.status);
+} catch (e) {
+Object.keys(lote).forEach((k) => { stats[k] += lote[k]; });
+}
+}
+
+function iniciarEnvioStats() {
+if (statsIntervaloId || !ID_BOT) return;
+statsIntervaloId = setInterval(() => enviarStats(false), INTERVALO_STATS_MS);
+document.addEventListener('visibilitychange', () => {
+if (document.visibilityState === 'hidden') enviarStats(true);
+});
+window.addEventListener('pagehide', () => enviarStats(true));
+}
+
+// ---- Sidebar: "Atualizado em" e marca BotQL ----
+// Free: mostra o rodape "Criado com BotQL". Premium: esconde.
+function formatarDataAtualizacao(iso) {
+if (!iso) return '';
+try { return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }); }
+catch (e) { return ''; }
+}
+function aplicarInfoBot(dados) {
+const sobre = document.getElementById('sidebar-sobre');
+const dataEl = document.getElementById('sobre-data');
+const rodape = document.getElementById('sidebar-rodape');
+const data = formatarDataAtualizacao(dados && dados.atualizado_em);
+if (sobre && dataEl && data) { dataEl.textContent = data; sobre.style.display = 'block'; }
+// Sem informacao de premium (erro/antigo) -> mostra a marca, por seguranca do modelo free.
+if (rodape) rodape.style.display = (dados && dados.premium === true) ? 'none' : 'block';
+}
+
+
 // MODO_CLIENTE = true sempre que o bot corre aqui mesmo, sem fetch a
 // um servidor "ao vivo" (cobre tanto ?id= quanto ?bot=). Só ?servidor=
 // fica de fora disto, porque esse modo ainda depende de um servidor
@@ -780,6 +870,7 @@ const dados = await resp.json();
 if (!dados.sucesso) return;
 
 definirNomeBot(dados.nome || 'Bot');
+aplicarInfoBot(dados);
 
 if (dados.pausado && !botPausado) {
 botPausado = true;
@@ -867,6 +958,7 @@ await carregarMotorBotQL();
 
 const nomeBot = dados.nome || 'Bot';
 definirNomeBot(nomeBot);
+aplicarInfoBot(dados);
 assinaturaBotAtual = assinaturaDados(dados);
 botPausado = false;
 
@@ -879,6 +971,7 @@ basePath: ''
 
 bot.onReply = ({ text, html }) => {
 esconderDigitando();
+if (text || html) contar('enviadas');
 if (text || html) adicionarMensagem(text || '', 'sistema', true, html);
 };
 bot.onForward = ({ target }) => {
@@ -924,17 +1017,22 @@ throw new Error(dados.erro || 'resposta inesperada da API');
 if (dados.pausado) {
 esconderTelaCarregando();
 definirNomeBot(dados.nome || 'Bot');
+aplicarInfoBot(dados);
 botPausado = true;
 assinaturaBotAtual = assinaturaDados(dados);
 adicionarMensagem(
 'Este bot está pausado no momento. Quem o criou pode reativá-lo mais tarde.',
 'sistema', false
 );
+contarVisitaUnica();
+iniciarEnvioStats();
 iniciarVerificacaoPeriodica();
 return;
 }
 
 await correrBotComDados(dados);
+contarVisitaUnica();
+iniciarEnvioStats();
 iniciarVerificacaoPeriodica();
 } catch (e) {
 esconderTelaCarregando();
@@ -1174,6 +1272,8 @@ if (novoValor) botaoClicado.classList.add('ativo');
 
 mostrarToast(novoValor === 'like' ? 'Obrigado pelo feedback' : (novoValor === 'dislike' ? 'Feedback registado' : 'Voto removido'));
 
+if (novoValor === 'like') contar('likes');
+if (novoValor === 'dislike') contar('dislikes');
 if (MODO_CLIENTE) return;
 
 try {
@@ -1229,6 +1329,7 @@ return;
 }
 try {
 if (!botInstancia) throw new Error('bot ainda não está pronto');
+contar('recebidas');
 await botInstancia.receiveMessage(CLIENTE, texto);
 // bot.onReply já trata de esconder "a digitar" e mostrar a
 // resposta -- se não disparar nada (bot sem resposta para o
