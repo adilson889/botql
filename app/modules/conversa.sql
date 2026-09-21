@@ -624,7 +624,7 @@ ON MESSAGE {
         REPLY "Nao tenho certeza se percebi bem. Podes reformular? Ou escreve 'ajuda' para veres tudo o que sei fazer."
     }
 
-    UPDATE Context()
+    UPDATE Context
     SET reply = lastMsg
     WHERE id = LAST_INSERT_ID()
 }
