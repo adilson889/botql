@@ -1,4 +1,10 @@
 [
+{
+  "id": "conversa",
+  "nome": "Assistente de Conversa",
+  "descricao": "Bot de conversa livre com mais de 20 fluxos: saudações, despedidas, desabafos, motivação, humor e curiosidades.",
+  "arquivo": "conversa.sql"
+},
   {
     "id": "atendimento",
     "nome": "Atendimento Básico",
