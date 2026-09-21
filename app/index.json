@@ -4,5 +4,17 @@
     "nome": "Atendimento Básico",
     "descricao": "Bot de saudação com resposta padrão para mensagens não reconhecidas.",
     "arquivo": "atendimento.sql"
-  }
+  },
+{
+  "id": "escola",
+  "nome": "Secretaria Escolar",
+  "descricao": "Atendimento institucional para escolas: matrículas, horários, documentos e contactos.",
+  "arquivo": "escola.sql"
+},
+{
+  "id": "igreja",
+  "nome": "Secretaria da Igreja",
+  "descricao": "Atendimento institucional para igrejas: cultos, batismos, casamentos, visitas e contactos.",
+  "arquivo": "igreja.sql"
+}
 ]
