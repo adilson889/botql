@@ -562,6 +562,7 @@ return resultados;
 _conselhoSemantico(message, candidatos) {
 if (!ternlight) return null;
 
+try {
 if (this._vetoresBlocos === null) {
 this._vetoresBlocos = this.blocks.map((bloco) => ternlight.embed(bloco));
 }
@@ -581,6 +582,11 @@ melhorIndex = i;
 
 if (melhorIndex === -1 || melhorScore < CONFIANCA_SEMANTICA_MINIMA) return null;
 return { index: melhorIndex, score: melhorScore };
+} catch (e) {
+// Ternlight indisponivel (ex: navegador sem bridge Android, ou .wasm
+// em falta): o BM25 decide sozinho em vez de rebentar o THINK.
+return null;
+}
 }
 
 /**
